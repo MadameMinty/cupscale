@@ -110,7 +110,7 @@ namespace Cupscale.UI
             {
                 if(IoUtils.compatibleExtensions.Contains(Path.GetExtension(img).ToLower()) && File.Exists(img))
                 {
-                    File.Copy(img, Path.Combine(Paths.imgInPath, Path.GetFileName(img)));
+                    File.Copy(img, IoUtils.GetUniquePath(Path.Combine(Paths.imgInPath, Path.GetFileName(img))));
                     i++;
                     float prog = -1f;
                     if (targetAmount > 0)

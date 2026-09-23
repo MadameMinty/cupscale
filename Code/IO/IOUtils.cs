@@ -282,6 +282,19 @@ namespace Cupscale
             }
         }
 
+        /// <summary> Returns path, or "name (2).ext", "name (3).ext"... if it exists. </summary>
+        public static string GetUniquePath(string path)
+        {
+            string dir = Path.GetDirectoryName(path);
+            string name = Path.GetFileNameWithoutExtension(path);
+            string ext = Path.GetExtension(path);
+
+            for (int i = 2; File.Exists(path); i++)
+                path = Path.Combine(dir, $"{name} ({i}){ext}");
+
+            return path;
+        }
+
         public static bool TryCopy(string source, string dest, bool overwrite)		// Copy with error handling. Returns false if failed
         {
             try
