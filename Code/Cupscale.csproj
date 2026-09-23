@@ -65,6 +65,7 @@
       <Generator></Generator>
       <CustomToolNamespace></CustomToolNamespace>
     </EmbeddedResource>
+    <EmbeddedResource Include="Resources\compare.html" LogicalName="compare.html" />
     <EmbeddedResource Update="Properties\Resources.resx">
       <Generator>PublicResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>

@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Cupscale Compare</title>
+<style>
+  :root { --bg: #111; --fg: #ddd; --mute: #999; --panel: rgba(0, 0, 0, .72); --line: rgba(255, 255, 255, .85); }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); color: var(--fg); font: 13px system-ui, sans-serif; }
+  #view { position: fixed; inset: 0; cursor: grab; touch-action: none; }
+  #view.panning { cursor: grabbing; }
+  .layer { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+  .layer img { position: absolute; left: 0; top: 0; max-width: none; user-select: none; }
+  img.px { image-rendering: pixelated; }
+  #div { position: absolute; top: 0; bottom: 0; width: 14px; margin-left: -7px; cursor: ew-resize; }
+  #div::after { content: ""; position: absolute; top: 0; bottom: 0; left: 6px; width: 1px; background: var(--line); box-shadow: 0 0 0 1px rgba(0, 0, 0, .45); }
+  #view.h #div { bottom: auto; left: 0; right: 0; width: auto; height: 14px; margin: -7px 0 0; cursor: ns-resize; }
+  #view.h #div::after { top: 6px; bottom: auto; left: 0; right: 0; width: auto; height: 1px; }
+  #view.follow #div { cursor: inherit; }
+  .label { position: fixed; top: 8px; max-width: 45vw; padding: 4px 8px; background: var(--panel); border-radius: 4px; pointer-events: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #lblL { left: 8px; }
+  #lblR { right: 8px; }
+  .label .sub { color: var(--mute); }
+  #hud { position: fixed; left: 50%; bottom: 8px; transform: translateX(-50%); display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; justify-content: center;
+         width: max-content; max-width: calc(100vw - 32px); padding: 6px 10px; background: var(--panel); border-radius: 6px; }
+  #hud select { max-width: 260px; background: #222; color: var(--fg); border: 1px solid #444; border-radius: 3px; }
+  #hud label { color: var(--mute); }
+  #help { flex-basis: 100%; text-align: center; color: var(--mute); font-size: 12px; }
+  kbd { padding: 0 3px; border: 1px solid #555; border-radius: 3px; color: var(--fg); font: inherit; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div id="view">
+  <div class="layer" id="layerR"><img id="imgR" alt="" draggable="false"></div>
+  <div class="layer" id="layerL"><img id="imgL" alt="" draggable="false"></div>
+  <div id="div"></div>
+</div>
+<div class="label" id="lblL"></div>
+<div class="label" id="lblR"></div>
+<div id="hud">
+  <label>Image <select id="selF"></select></label>
+  <label>Left <select id="selL"></select></label>
+  <label>Right <select id="selR"></select></label>
+  <span id="zoom"></span>
+  <div id="help">
+    <kbd>←</kbd><kbd>→</kbd> right model · <kbd>Shift</kbd>+<kbd>←</kbd><kbd>→</kbd> left side · <kbd>↑</kbd><kbd>↓</kbd> image ·
+    hold <kbd>Space</kbd> left only · hold <kbd>V</kbd> right only · <kbd>D</kbd> divider direction · <kbd>M</kbd> divider follows mouse ·
+    wheel zoom · drag pan · <kbd>0</kbd> 4× · <kbd>Z</kbd> fit · <kbd>F</kbd> fullscreen · <kbd>H</kbd> hide HUD
+  </div>
+</div>
+<script src="manifest.js"></script>
+<script>
+const M = window.MANIFEST;
+const $ = id => document.getElementById(id);
+const view = $('view'), imgL = $('imgL'), imgR = $('imgR'), layerL = $('layerL'), divEl = $('div');
+const DEFAULT_Z = 4;  // device px per original px
+const ZSTEPS = [0.25, 0.5, 1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64];
+const ORIG = 'orig';
+const S = { fi: 0, l: ORIG, r: null, z: DEFAULT_Z, ox: 0, oy: 0, div: 0.5, horiz: false, follow: false, hold: null, W: 0, H: 0 };
+
+const fx = () => M.fixtures[S.fi];
+const byName = Object.fromEntries(M.models.map(m => [m.name, m]));
+const modelsFor = f => M.models.filter(m => Object.hasOwn(m.outputs, f.key)).map(m => m.name);
+const srcOf = key => key === ORIG ? fx().url : byName[key]?.outputs[fx().key] ?? '';
+
+async function findOrig(f) {
+  const im = new Image();
+  im.src = f.url;
+  await im.decode();
+  return im;
+}
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+
+// Load into el only once decoded, dropping stale requests.
+async function setSrc(el, key) {
+  const my = el._tok = (el._tok || 0) + 1;
+  el._key = key;
+  const im = new Image();
+  im.src = srcOf(key);
+  try { await im.decode(); } catch { /* missing: naturalWidth stays 0 */ }
+  if (my !== el._tok) return;
+  if (im.naturalWidth) { el.src = im.src; el._nat = im.naturalWidth; }
+  else { el.removeAttribute('src'); el._nat = 0; }
+  layout();
+  labels();
+}
+
+function layout() {
+  const dpr = devicePixelRatio, vw = view.clientWidth;
+  const w = S.W * S.z / dpr, h = S.H * S.z / dpr;
+  const ox = Math.round(S.ox * dpr) / dpr, oy = Math.round(S.oy * dpr) / dpr;
+  for (const el of [imgL, imgR]) {
+    el.style.width = `${w}px`;
+    el.style.height = `${h}px`;
+    el.style.transform = `translate(${ox}px, ${oy}px)`;
+    el.classList.toggle('px', el._nat > 0 && S.W * S.z > el._nat * 1.001);
+  }
+  // Vertical: left/right split. Horizontal: "left" on top, "right" below, right label rides under the line.
+  const vh = view.clientHeight, pos = Math.round(S.div * (S.horiz ? vh : vw));
+  divEl.style.left = S.horiz ? '' : `${pos}px`;
+  divEl.style.top = S.horiz ? `${pos}px` : '';
+  $('lblR').style.top = S.horiz ? `${clamp(pos + 8, 8, vh - 40)}px` : '';
+  divEl.classList.toggle('hidden', !!S.hold);
+  const split = S.horiz ? `inset(0 0 ${vh - pos}px 0)` : `inset(0 ${vw - pos}px 0 0)`;
+  layerL.style.clipPath = S.hold === 'l' ? 'none' : S.hold === 'r' ? 'inset(0 100% 0 0)' : split;
+  const zr = imgR._nat ? S.z * S.W / imgR._nat : 0;
+  $('zoom').textContent = `orig ${+S.z.toFixed(2)}× · right ${zr ? ratio(zr) : '—'}`;
+}
+
+const ratio = k => k >= 1 ? `${+k.toFixed(2)}:1` : `1:${+(1 / k).toFixed(2)}`;
+
+function labels() {
+  const avail = modelsFor(fx());
+  const text = (el, key) => {
+    if (key === ORIG) return `Original <span class="sub">${S.W}×${S.H}</span>`;
+    const scale = el._nat ? `${Math.round(el._nat / S.W)}x` : 'missing';
+    return `${key} <span class="sub">${scale} · ${avail.indexOf(key) + 1}/${avail.length}</span>`;
+  };
+  $('lblL').innerHTML = text(imgL, S.l);
+  $('lblR').innerHTML = text(imgR, S.r);
+}
+
+function fill(sel, items, value) {
+  sel.replaceChildren(...items.map(([v, t]) => new Option(t, v, false, v === value)));
+}
+
+function syncUi() {
+  const avail = modelsFor(fx());
+  fill($('selF'), M.fixtures.map((f, i) => [String(i), f.file]), String(S.fi));
+  fill($('selL'), [[ORIG, 'Original'], ...avail.map(m => [m, m])], S.l);
+  fill($('selR'), avail.map(m => [m, m]), S.r);
+  history.replaceState(null, '', '#' + new URLSearchParams({ f: fx().key, l: S.l, r: S.r, d: S.horiz ? 'h' : 'v' }));
+}
+
+function setHoriz(on) {
+  S.horiz = on;
+  view.classList.toggle('h', on);
+  layout();
+}
+
+function resetView() {
+  const dpr = devicePixelRatio;
+  S.z = DEFAULT_Z;
+  S.ox = (view.clientWidth - S.W * S.z / dpr) / 2;
+  S.oy = (view.clientHeight - S.H * S.z / dpr) / 2;
+  layout();
+}
+
+function fit() {
+  const dpr = devicePixelRatio;
+  S.z = Math.min(view.clientWidth / S.W, view.clientHeight / S.H) * dpr;
+  S.ox = (view.clientWidth - S.W * S.z / dpr) / 2;
+  S.oy = (view.clientHeight - S.H * S.z / dpr) / 2;
+  layout();
+}
+
+function zoomAt(nz, mx, my) {
+  nz = clamp(nz, ZSTEPS[0], ZSTEPS.at(-1));
+  const k = nz / S.z;
+  S.ox = mx - (mx - S.ox) * k;
+  S.oy = my - (my - S.oy) * k;
+  S.z = nz;
+  layout();
+}
+
+const nextStep = dir => dir > 0
+  ? ZSTEPS.find(s => s > S.z + 1e-9) ?? S.z
+  : [...ZSTEPS].reverse().find(s => s < S.z - 1e-9) ?? S.z;
+
+// Keep chosen models when switching image if they have an output for it.
+async function setFixture(i, keepView = false) {
+  S.fi = (i + M.fixtures.length) % M.fixtures.length;
+  const avail = modelsFor(fx());
+  if (!avail.includes(S.r)) S.r = avail[0] ?? null;
+  if (S.l !== ORIG && !avail.includes(S.l)) S.l = ORIG;
+  const f = fx(), im = await findOrig(f);
+  if (f !== fx()) return;
+  S.W = im.naturalWidth;
+  S.H = im.naturalHeight;
+  if (!keepView) resetView();
+  syncUi();
+  setSrc(imgL, S.l);
+  setSrc(imgR, S.r);
+  preload();
+}
+
+function setModel(side, key) {
+  S[side] = key;
+  syncUi();
+  setSrc(side === 'l' ? imgL : imgR, key);
+  preload();
+}
+
+function cycle(side, dir) {
+  const list = side === 'l' ? [ORIG, ...modelsFor(fx())] : modelsFor(fx());
+  const i = list.indexOf(S[side]);
+  setModel(side, list[(i + dir + list.length) % list.length]);
+}
+
+// Warm the cache for neighbouring right-side models.
+function preload() {
+  const list = modelsFor(fx()), i = list.indexOf(S.r);
+  for (const d of [1, -1]) new Image().src = srcOf(list[(i + d + list.length) % list.length]);
+}
+
+// Pointer: drag divider, else pan.
+let drag = null;
+view.addEventListener('pointerdown', e => {
+  if (e.button !== 0) return;
+  view.setPointerCapture(e.pointerId);
+  if (e.target === divEl && !S.follow) drag = { mode: 'div' };
+  else {
+    drag = { mode: 'pan', x: e.clientX, y: e.clientY, ox: S.ox, oy: S.oy };
+    view.classList.add('panning');
+  }
+});
+view.addEventListener('pointermove', e => {
+  if (drag?.mode === 'pan') {
+    S.ox = drag.ox + e.clientX - drag.x;
+    S.oy = drag.oy + e.clientY - drag.y;
+  } else if (drag?.mode === 'div' || S.follow) {
+    S.div = S.horiz ? clamp(e.clientY / view.clientHeight, 0, 1) : clamp(e.clientX / view.clientWidth, 0, 1);
+  } else return;
+  layout();
+});
+const endDrag = () => { drag = null; view.classList.remove('panning'); };
+view.addEventListener('pointerup', endDrag);
+view.addEventListener('pointercancel', endDrag);
+view.addEventListener('wheel', e => {
+  e.preventDefault();
+  zoomAt(nextStep(-Math.sign(e.deltaY)), e.clientX, e.clientY);
+}, { passive: false });
+view.addEventListener('dblclick', e => zoomAt(S.z === DEFAULT_Z ? 16 : DEFAULT_Z, e.clientX, e.clientY));
+
+addEventListener('keydown', e => {
+  if (e.target.tagName === 'SELECT' || e.ctrlKey || e.metaKey || e.altKey) return;
+  const cx = view.clientWidth / 2, cy = view.clientHeight / 2;
+  const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+  switch (k) {
+    case 'ArrowRight': cycle(e.shiftKey ? 'l' : 'r', 1); break;
+    case 'ArrowLeft': cycle(e.shiftKey ? 'l' : 'r', -1); break;
+    case 'ArrowDown': setFixture(S.fi + 1); break;
+    case 'ArrowUp': setFixture(S.fi - 1); break;
+    case ' ': if (!e.repeat) { S.hold = 'l'; layout(); } break;
+    case 'v': if (!e.repeat) { S.hold = 'r'; layout(); } break;
+    case 'd': setHoriz(!S.horiz); syncUi(); break;
+    case 'm': S.follow = !S.follow; view.classList.toggle('follow', S.follow); break;
+    case '0': resetView(); break;
+    case 'z': fit(); break;
+    case '+': case '=': zoomAt(nextStep(1), cx, cy); break;
+    case '-': zoomAt(nextStep(-1), cx, cy); break;
+    case 'f': document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); break;
+    case 'h': $('hud').classList.toggle('hidden'); break;
+    default: return;
+  }
+  e.preventDefault();
+});
+addEventListener('keyup', e => {
+  const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+  if ((k === ' ' && S.hold === 'l') || (k === 'v' && S.hold === 'r')) { S.hold = null; layout(); }
+});
+addEventListener('blur', () => { S.hold = null; layout(); });
+addEventListener('resize', layout);
+
+// Selects: change on pick, or step through options with the wheel while hovered.
+for (const [id, fn] of [['selF', v => setFixture(+v)], ['selL', v => setModel('l', v)], ['selR', v => setModel('r', v)]]) {
+  const sel = $(id);
+  sel.addEventListener('change', () => { fn(sel.value); sel.blur(); });
+  sel.addEventListener('wheel', e => {
+    e.preventDefault();
+    const i = clamp(sel.selectedIndex + Math.sign(e.deltaY), 0, sel.options.length - 1);
+    if (i !== sel.selectedIndex) { sel.selectedIndex = i; fn(sel.value); }
+  }, { passive: false });
+}
+
+// Restore state from URL hash.
+const h = new URLSearchParams(location.hash.slice(1));
+const fi = Math.max(0, M.fixtures.findIndex(f => f.key === h.get('f')));
+S.r = h.get('r');
+S.l = h.get('l') || ORIG;
+setHoriz(h.get('d') === 'h');
+setFixture(fi);
+</script>
+</body>
+</html>
