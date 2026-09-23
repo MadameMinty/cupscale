@@ -12,7 +12,7 @@ namespace Cupscale.OS
 {
     class NvApi
     {
-        public enum Architecture { Undetected, Fermi, Kepler, Maxwell, Pascal, Turing, Ampere };
+        public enum Architecture { Undetected, Fermi, Kepler, Maxwell, Pascal, Turing, Ampere, Ada, Hopper, Blackwell };
         public static List<PhysicalGPU> gpuList = new List<PhysicalGPU>();
 
         public static async void Init ()
@@ -52,13 +52,11 @@ namespace Cupscale.OS
 
         public static bool HasAmpereOrNewer()   // To detect if newer Pytorch version is needed
         {
-            return false; // TODO: REMOVE ME
-
             foreach (PhysicalGPU gpu in gpuList)
             {
                 Architecture arch = GetArch(gpu);
 
-                if (arch == Architecture.Ampere || arch == Architecture.Undetected)
+                if (arch >= Architecture.Ampere || arch == Architecture.Undetected)
                     return true;
             }
 
@@ -67,14 +65,22 @@ namespace Cupscale.OS
 
         public static Architecture GetArch(PhysicalGPU gpu)
         {
-            string gpuCode = gpu.ArchitectInformation.ShortName;
+            return GetArch(gpu.ArchitectInformation.ShortName);
+        }
 
-            if (gpuCode.Trim().StartsWith("GF")) return Architecture.Fermi;
-            if (gpuCode.Trim().StartsWith("GK")) return Architecture.Kepler;
-            if (gpuCode.Trim().StartsWith("GM")) return Architecture.Maxwell;
-            if (gpuCode.Trim().StartsWith("GP")) return Architecture.Pascal;
-            if (gpuCode.Trim().StartsWith("TU")) return Architecture.Turing;
-            if (gpuCode.Trim().StartsWith("GA")) return Architecture.Ampere;
+        public static Architecture GetArch(string gpuCode)
+        {
+            gpuCode = gpuCode?.Trim() ?? "";
+
+            if (gpuCode.StartsWith("GF")) return Architecture.Fermi;
+            if (gpuCode.StartsWith("GK")) return Architecture.Kepler;
+            if (gpuCode.StartsWith("GM")) return Architecture.Maxwell;
+            if (gpuCode.StartsWith("GP")) return Architecture.Pascal;
+            if (gpuCode.StartsWith("TU")) return Architecture.Turing;
+            if (gpuCode.StartsWith("GA")) return Architecture.Ampere;
+            if (gpuCode.StartsWith("AD")) return Architecture.Ada;
+            if (gpuCode.StartsWith("GH")) return Architecture.Hopper;
+            if (gpuCode.StartsWith("GB")) return Architecture.Blackwell;
 
             return Architecture.Undetected;
         }
