@@ -55,6 +55,12 @@ namespace Cupscale.OS
             return SetStartInfo(proc, hidden, filename);
         }
 
+        /// <summary> Opens a URL in the default browser (.NET no longer shell-executes by default). </summary>
+        public static void OpenUrl(string url)
+        {
+            Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+        }
+
         /// <summary> Starts a process that gets killed if Cupscale exits. </summary>
         public static void StartTracked(Process proc)
         {

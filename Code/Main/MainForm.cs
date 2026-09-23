@@ -874,17 +874,17 @@ namespace Cupscale.Main
 
         private void paypalBtn_Click(object sender, EventArgs e)
         {
-            Process.Start("https://www.paypal.com/paypalme/nmkd/10");
+            OsUtils.OpenUrl("https://www.paypal.com/paypalme/nmkd/10");
         }
 
 		private void patreonBtn_Click(object sender, EventArgs e)
         {
-			Process.Start("https://patreon.com/n00mkrad");
+			OsUtils.OpenUrl("https://patreon.com/n00mkrad");
 		}
 
         private void discordBtn_Click(object sender, EventArgs e)
         {
-            Process.Start("https://discord.gg/eJHD2NSJRe");
+            OsUtils.OpenUrl("https://discord.gg/eJHD2NSJRe");
 		}
 
         private void aiSelect_SelectedIndexChanged(object sender, EventArgs e)
