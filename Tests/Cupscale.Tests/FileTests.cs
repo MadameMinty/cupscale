@@ -45,6 +45,17 @@ namespace CupscaleTests
             Assert.Null(PostProcessingQueue.GetTmpPath(Path.Combine(outRoot, "a-model.png"), outRoot, inRoot, Exists()));
         }
 
+        [Theory]
+        [InlineData(@"C:\Users\x\AppData\Local\Temp\Temp1_Cupscale.zip\Cupscale", true)]
+        [InlineData(@"C:\Users\x\AppData\Local\Temp\Rar$EXa1234.5678\Cupscale", true)]
+        [InlineData(@"C:\Users\x\AppData\Local\Temp\7zO4A1B2C3D", true)]
+        [InlineData(@"C:\Users\x\AppData\Local\Temp\claude\scratchpad\publish", false)]
+        [InlineData(@"D:\Tools\Cupscale", false)]
+        public void IsInsideArchiveTempDir_DetectsArchiveExtraction(string dir, bool expected)
+        {
+            Assert.Equal(expected, IoUtils.IsInsideArchiveTempDir(dir));
+        }
+
         [Fact]
         public void GetUniquePath_AppendsCounter()
         {

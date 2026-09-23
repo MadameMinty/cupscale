@@ -42,9 +42,9 @@ namespace Cupscale.Main
 
 		private async void MainForm_Load(object sender, EventArgs e)
 		{
-            if (!Directory.Exists(Path.Combine(Paths.GetExeDir(), "runtimes")) && Paths.GetExeDir().ToLower().Contains("temp"))
+            if (IoUtils.IsInsideArchiveTempDir(Paths.GetExeDir()))
             {
-                MessageBox.Show("You seem to be running Flowframes out of an archive.\nPlease extract the whole archive first!", "Error");
+                MessageBox.Show("You seem to be running Cupscale out of an archive.\nPlease extract the whole archive first!", "Error");
                 IoUtils.TryDeleteIfExists(Paths.GetDataPath());
                 Application.Exit();
             }

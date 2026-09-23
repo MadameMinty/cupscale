@@ -22,6 +22,13 @@ namespace Cupscale
         public static string[] videoExtensions = new string[] { ".mp4", ".m4v", ".mkv", ".webm", ".gif", ".avi" };
         public static bool hasShownPortableInfo = false;
 
+        /// <summary> True for folders Explorer/WinRAR/7-Zip create when running an exe straight from an archive. </summary>
+        public static bool IsInsideArchiveTempDir (string dir)
+        {
+            string d = dir.ToLowerInvariant().Replace('/', '\\') + "\\";
+            return Regex.IsMatch(d, @"\\temp\\(temp\d+_[^\\]*\.zip|rar\$[^\\]*|7z[a-z0-9]+)\\");
+        }
+
         public static bool IsPortable ()
         {
             foreach (string arg in Environment.GetCommandLineArgs())
