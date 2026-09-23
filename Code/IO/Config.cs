@@ -258,6 +258,7 @@ namespace Cupscale
             if (key == "flipTga") return WriteDefault(key, "True");
             // ESRGAN Pytorch
             if (key == "esrganPytorchPythonRuntime") return WriteDefault(key, "1");
+            if (key == "pythonRuntimeUrl") return WriteDefault(key, Paths.pythonRuntimeReleaseUrl);
             if (key == "esrganPytorchAlphaMode") return WriteDefault(key, "1");
             if (key == "esrganPytorchFp16")
             {
