@@ -372,3 +372,13 @@ __pycache__/
 
 # scratch
 +/
+
+# tests
+__fixtures__/
+__outputs__/
+
+# Fetched by tools/fetch-binaries.ps1 (too large for git)
+/Installer Files/ffmpeg.exe
+
+# GUI test outputs
+/Tests/python/__outputs__/
