@@ -19,7 +19,7 @@ namespace Cupscale
 			}
 			else if (!Directory.Exists(Config.Get("modelPath")))
 			{
-				Program.ShowMessage("The model path you entered isn't valid!", "Notice");
+				Program.ShowMessage($"The model path \"{Config.Get("modelPath")}\" doesn't exist.\nPlease fix it in the settings.", "Notice");
 				new SettingsForm().ShowDialog();
 			}
 		}
@@ -40,7 +40,7 @@ namespace Cupscale
 			string mdlPath = Config.Get("modelPath");
             if (!Directory.Exists(mdlPath))
             {
-				Logger.Log("[EsrganData] Model dir doesn't exist!");
+				Logger.Log($"[EsrganData] Model folder doesn't exist: {mdlPath}");
 				return;
 			}
 			models.Clear();
@@ -56,6 +56,8 @@ namespace Cupscale
 					modelsFullPath.Add(path);
 				}
 			}
+
+			Logger.Log($"[EsrganData] Model folder: {mdlPath} ({models.Count} models)");
 		}
 	}
 }
