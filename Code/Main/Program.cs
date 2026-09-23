@@ -44,6 +44,7 @@ namespace Cupscale
         private static void Main()
         {
             Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);  // Was App.config DpiAwareness on .NET Framework
+            Application.SetDefaultFont(new System.Drawing.Font("Microsoft Sans Serif", 8.25f));    // .NET Framework default; forms were designed for it
 
             try
             {
