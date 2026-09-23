@@ -263,7 +263,7 @@
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
             this.Name = "ModelComparisonForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            this.Text = "Model Comparison Wizard";
+            this.Text = "Model Comparison Tool";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.ModelComparisonForm_FormClosing);
             this.Load += new System.EventHandler(this.ModelComparisonForm_Load);
             this.groupBox1.ResumeLayout(false);
