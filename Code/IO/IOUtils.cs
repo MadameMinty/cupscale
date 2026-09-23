@@ -487,24 +487,16 @@ namespace Cupscale
         {
             try
             {
-                string driveLetter = path.Substring(0, 2);      // Make 'C:/some/random/path' => 'C:' etc
-                DriveInfo[] allDrives = DriveInfo.GetDrives();
-                foreach (DriveInfo d in allDrives)
-                {
-                    if (d.IsReady == true && d.Name.StartsWith(driveLetter))
-                    {
-                        if (mbytes)
-                            return (long)(d.AvailableFreeSpace / 1024f / 1000f);
-                        else
-                            return d.AvailableFreeSpace;
-                    }
-                }
+                DriveInfo d = new DriveInfo(Path.GetPathRoot(Path.GetFullPath(path)));
+
+                if (d.IsReady)
+                    return mbytes ? (long)(d.AvailableFreeSpace / 1024f / 1000f) : d.AvailableFreeSpace;
             }
             catch (Exception e)
             {
-                Logger.ErrorMessage("Error trying to get disk space.", e);
+                Logger.Log($"Can't get disk space for '{path}' (network path?): {e.Message}");
             }
-            return 0;
+            return long.MaxValue;   // Unknown - don't block
         }
 
         public static bool HasEnoughDiskSpace(string path, float multiplier = 2.0f)
@@ -521,7 +513,7 @@ namespace Cupscale
 
         public static bool HasEnoughDiskSpace(int mBytes, string drivePath, float multiplier = 2.0f)
         {
-            int requiredDiskSpaceMb = mBytes;
+            int requiredDiskSpaceMb = (int)(mBytes * multiplier);
             long availDiskSpaceMb = GetDiskSpace(drivePath);
             Logger.Log($"Disk space check for {drivePath} with multiplier {multiplier} - {requiredDiskSpaceMb} MB needed, {availDiskSpaceMb} MB available");
             if (availDiskSpaceMb > requiredDiskSpaceMb)

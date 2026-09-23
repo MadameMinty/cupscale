@@ -160,9 +160,11 @@ namespace Cupscale.UI
                 return;
             }
 
-            if (!IoUtils.HasEnoughDiskSpace((int)(IoUtils.GetDirSize(Paths.imgInPath) / 1024 / 1024), imgOutDir.Substring(0, 2), 2.0f) )
+            long inputBytes = multiImgMode ? currentInFiles.Where(File.Exists).Sum(f => new FileInfo(f).Length) : IoUtils.GetDirSize(currentInDir);
+
+            if (!IoUtils.HasEnoughDiskSpace((int)(inputBytes / 1024 / 1024), Paths.GetDataPath(), 2.0f))
             {
-                Program.ShowMessage($"Not enough disk space on {Paths.GetDataPath().Substring(0, 3)} to store temporary files!", "Error");
+                Program.ShowMessage($"Not enough disk space on {Path.GetPathRoot(Paths.GetDataPath())} to store temporary files!", "Error");
                 return;
             }
 
