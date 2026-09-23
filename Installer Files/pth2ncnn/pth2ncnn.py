@@ -168,7 +168,7 @@ def pth2ncnn_compatibility(model: str, fp16=False, directory: str = None):
     timer = Timer()
     print("Running PTH2NCNN Compatibility Mode - PTH2NCNN ChaiNNer Edition")
     model_name = pathlib.Path(model).resolve().stem
-    model: PyTorchModel = LoadTorchModel(model, fp16)
+    model: PyTorchModel = LoadTorchModel(model, False)  # Exported as fp32; loading as fp16 first only lost precision
     model_scale = model.scale
     path = (pathlib.Path() / model_name) if directory is None else pathlib.Path(directory)
     SaveTorchToNCNN(model, str(path), f"x{str(model_scale)}")
