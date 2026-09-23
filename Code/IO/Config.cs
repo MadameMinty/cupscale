@@ -15,6 +15,7 @@ namespace Cupscale
     {
         private static string configPath;
         public static Dictionary<string, string> cachedValues = new Dictionary<string, string>();
+        static readonly object configLock = new object();
 
         public static void Init()
         {
@@ -32,7 +33,8 @@ namespace Cupscale
 
                 File.Delete(configPath);
                 await Task.Delay(100);
-                cachedValues.Clear();
+                lock (configLock)
+                    cachedValues.Clear();
                 await Task.Delay(100);
 
                 if (settingsForm != null)
@@ -54,19 +56,22 @@ namespace Cupscale
 
         public static void Set(string str, string value)
         {
-            Reload();
-            cachedValues[str] = value;
-            WriteConfig();
+            lock (configLock)
+            {
+                cachedValues[str] = value;
+                WriteConfig();
+            }
         }
 
         public static void Set(Dictionary<string, string> keyValuePairs)
         {
-            Reload();
+            lock (configLock)
+            {
+                foreach (KeyValuePair<string, string> entry in keyValuePairs)
+                    cachedValues[entry.Key] = entry.Value;
 
-            foreach (KeyValuePair<string, string> entry in keyValuePairs)
-                cachedValues[entry.Key] = entry.Value;
-
-            WriteConfig();
+                WriteConfig();
+            }
         }
 
         private static void WriteConfig()
@@ -121,8 +126,11 @@ namespace Cupscale
 
             try
             {
-                if (cachedValues.ContainsKey(keyStr))
-                    return cachedValues[keyStr];
+                lock (configLock)
+                {
+                    if (cachedValues.TryGetValue(keyStr, out string val))
+                        return val;
+                }
 
                 return WriteDefaultValIfExists(key.ToString(), type);
             }
@@ -224,10 +232,11 @@ namespace Cupscale
 
         static void WriteIfDoesntExist(string key, string val)
         {
-            if (cachedValues.ContainsKey(key.ToString()))
-                return;
-
-            Set(key, val);
+            lock (configLock)
+            {
+                if (!cachedValues.ContainsKey(key))
+                    Set(key, val);
+            }
         }
 
         public enum Type { String, Int, Float, Bool }
