@@ -230,7 +230,7 @@ namespace Cupscale
                 if (file.Extension.Replace(".", "") == oldExt.Replace(".", ""))
                 {
                     targetPath = Path.ChangeExtension(file.FullName, newExt);
-                    if (!File.Exists(targetPath))
+                    if (File.Exists(targetPath))
                         File.Delete(targetPath);
                     File.Move(file.FullName, targetPath);
                 }
@@ -248,7 +248,7 @@ namespace Cupscale
                 {
                     targetPath = Path.ChangeExtension(file.FullName, newExt);
 
-                    if (!File.Exists(targetPath))
+                    if (File.Exists(targetPath))
                         File.Delete(targetPath);
 
                     File.Move(file.FullName, targetPath);
@@ -276,7 +276,7 @@ namespace Cupscale
             foreach (FileInfo file in files)
             {
                 targetPath = file.FullName + append;
-                if (!File.Exists(targetPath))
+                if (File.Exists(targetPath))
                     File.Delete(targetPath);
                 File.Move(file.FullName, targetPath);
             }

@@ -181,6 +181,7 @@ namespace Cupscale.Main
 
                 newFilename = pathNoExt + "-" + GetLastModelName() + ext;
                 Logger.Log($"FilenamePostprocess: Moving {file} => {newFilename}");
+                IoUtils.DeleteIfExists(newFilename);
                 File.Move(file, newFilename);
                 newFilename = IoUtils.RenameExtension(newFilename, "jpg", Config.Get("jpegExtension"));
 
