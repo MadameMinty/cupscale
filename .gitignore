@@ -380,5 +380,6 @@ __outputs__/
 # Fetched by tools/fetch-binaries.ps1 (too large for git)
 /Installer Files/ffmpeg.exe
 
-# GUI test outputs
+# GUI test inputs (make_fixtures.ps1) and outputs
+/Tests/python/__fixtures__/
 /Tests/python/__outputs__/
