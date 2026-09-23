@@ -6,6 +6,7 @@ using Cupscale.UI;
 using System;
 using System.Diagnostics;
 using System.Drawing;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
@@ -200,6 +201,18 @@ namespace Cupscale.OS
 				Logger.Log($"Failed to get NCNN model scale for dir '{modelDir}': {e.Message}");
 				return 4;
             }
+		}
+
+		/// <summary> Parses NCNN progress lines like "12.50%" regardless of system locale. </summary>
+		public static bool TryParsePercent(string line, out float percent)
+		{
+			percent = 0f;
+			string s = line?.Trim();
+
+			if (string.IsNullOrEmpty(s) || !s.EndsWith("%"))
+				return false;
+
+			return float.TryParse(s.TrimEnd('%').Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out percent);
 		}
 	}
 }

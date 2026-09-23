@@ -93,11 +93,8 @@ namespace Cupscale.Implementations
 
             bool showTileProgress = Upscale.currentMode == Upscale.UpscaleMode.Preview || Upscale.currentMode == Upscale.UpscaleMode.Single;
 
-            if (showTileProgress && line.Trim().EndsWith("%"))
-            {
-                float percent = float.Parse(line.Replace("%", ""));
+            if (showTileProgress && NcnnUtils.TryParsePercent(line, out float percent))
                 Program.mainForm.SetProgress(percent, $"Upscaling Tiles ({percent}%)");
-            }
 
             if (error)
                 GeneralOutputHandler.HandleImpErrorMsgs(line, GeneralOutputHandler.ProcessType.Ncnn);
