@@ -27,6 +27,7 @@ namespace Cupscale.Implementations
         {
             Program.mainForm.SetProgress(3f, "Loading ESRGAN (Pytorch)...");
             File.Delete(ProgressLogFile);
+            progressFileOffset = 0;
             bool showWindow = Config.GetInt("cmdDebugMode") > 0;
             bool stayOpen = Config.GetInt("cmdDebugMode") == 2;
 
@@ -183,22 +184,46 @@ namespace Cupscale.Implementations
         }
 
         static string lastProgressString = "";
+        static long progressFileOffset;
+
+        /// <summary> Returns the last complete line appended since the previous call, or null. </summary>
+        static string ReadLastNewLine(string path)
+        {
+            if (!File.Exists(path))
+                return null;
+
+            using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
+            {
+                if (fs.Length < progressFileOffset)     // File was recreated
+                    progressFileOffset = 0;
+
+                fs.Seek(progressFileOffset, SeekOrigin.Begin);
+                string appended = new StreamReader(fs).ReadToEnd();
+                int lastBreak = appended.LastIndexOf('\n');
+
+                if (lastBreak < 0)
+                    return null;
+
+                progressFileOffset += System.Text.Encoding.UTF8.GetByteCount(appended.Substring(0, lastBreak + 1));
+                string[] lines = appended.Substring(0, lastBreak).Split('\n');
+                return lines[lines.Length - 1].TrimEnd('\r');
+            }
+        }
 
         private static async Task UpdateProgressFromFile()
         {
-            string progressLogFile = ProgressLogFile;
+            string outStr;
 
-            if (!File.Exists(progressLogFile))
+            try
+            {
+                outStr = ReadLastNewLine(ProgressLogFile);
+            }
+            catch (IOException)
+            {
                 return;
+            }
 
-            string[] lines = IoUtils.ReadLines(progressLogFile);
-
-            if (lines.Length < 1)
-                return;
-
-            string outStr = (lines[lines.Length - 1]);
-
-            if (outStr == lastProgressString)
+            if (string.IsNullOrEmpty(outStr) || outStr == lastProgressString)
                 return;
 
             lastProgressString = outStr;
