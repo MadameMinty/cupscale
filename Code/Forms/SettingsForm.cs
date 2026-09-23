@@ -216,9 +216,9 @@ namespace Cupscale.Forms
             }
         }
 
-        private void CompressButton_Click(object sender, EventArgs e)
+        private async void CompressButton_Click(object sender, EventArgs e)
         {
-            EmbeddedPython.PublicRunCompact();
+            await EmbeddedPython.PublicRunCompact();
         }
     }
 }

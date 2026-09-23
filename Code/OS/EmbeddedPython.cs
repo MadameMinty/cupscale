@@ -63,12 +63,12 @@ namespace Cupscale.OS
             }
         }
 
-        public static void PublicRunCompact()
+        public static async Task PublicRunCompact()
         {
             extractPath = Path.Combine(Installer.path, "py");
             if (Directory.Exists(extractPath))
             {
-                RunCompact();
+                await RunCompact();
                 Program.ShowMessage("Compression Complete!", "Compressor");
             }
             else
@@ -108,20 +108,55 @@ namespace Cupscale.OS
             IoUtils.DeleteIfExists(downloadPath);
             await Task.Delay(10);
 
-            string srv = Servers.closestServer.GetUrl();
-            string url = Path.Combine(srv, NvApi.HasAmpereOrNewer() ? Paths.pythonAmperePath : Paths.pythonTuringPath).Replace("\\", "/");
+            string url = GetRuntimeUrl();
             Logger.Log($"Downloading embedded Python from '{url}'");
 
             Print("Downloading compressed python runtime...");
             var client = new WebClient();
             client.DownloadProgressChanged += DownloadProgressChanged;
-            client.DownloadFileAsync(new Uri(url), downloadPath);
             client.DownloadFileCompleted += DoneDownloading;
+            client.DownloadFileAsync(new Uri(url), downloadPath);
         }
 
-        static void DoneDownloading (object sender, AsyncCompletedEventArgs e)
+        /// <summary> Config "pythonRuntimeUrl" (full URL) overrides the default server package. </summary>
+        static string GetRuntimeUrl()
         {
-            Install();
+            string custom = Config.Get("pythonRuntimeUrl");
+
+            if (!string.IsNullOrWhiteSpace(custom))
+                return custom.Trim();
+
+            string srv = Servers.closestServer.GetUrl();
+            return Path.Combine(srv, NvApi.HasAmpereOrNewer() ? Paths.pythonAmperePath : Paths.pythonTuringPath).Replace("\\", "/");
+        }
+
+        static async void DoneDownloading (object sender, AsyncCompletedEventArgs e)
+        {
+            ((WebClient)sender).Dispose();
+
+            if (e.Cancelled || e.Error != null)
+            {
+                Print($"Download failed: {e.Error?.Message ?? "Cancelled"}");
+                Logger.Log($"Embedded Python download failed: {e.Error}");
+                IoUtils.TryDeleteIfExists(downloadPath);
+                runBtn.Enabled = true;
+                return;
+            }
+
+            try
+            {
+                await Install();
+            }
+            catch (Exception ex)
+            {
+                Print($"Installation failed: {ex.Message}");
+                Logger.Log($"Embedded Python installation failed: {ex}");
+            }
+            finally
+            {
+                isExtracting = false;
+                runBtn.Enabled = true;
+            }
         }
 
         static async Task Install ()
@@ -150,25 +185,28 @@ namespace Cupscale.OS
                 "by about 40%.\nThis can take a few minutes.", "Message");
             while (DialogQueue.IsOpen(msg)) await Task.Delay(50);
             Print("Compressing files...");
-            RunCompact();
+            await RunCompact();
             Print("Done!");
             Config.Set("esrganPytorchPythonRuntime", "1");
             await Init();
             MsgBox msg2 = Program.ShowMessage("Installed embedded Python runtime and enabled it!\nIf you want to disable it, you can do so in the settings.", "Message");
             while (DialogQueue.IsOpen(msg2)) await Task.Delay(50);
-            runBtn.Enabled = true;
         }
 
-        static void RunCompact ()
+        static async Task RunCompact ()
         {
             bool stayOpen = Config.GetInt("cmdDebugMode") == 2;
             string opt = stayOpen ? "/K" : "/C";
             Process compact = OsUtils.NewProcess(false);
             compact.StartInfo.Arguments = $"{opt} compact /C /S:{extractPath.Wrap()}";
             OsUtils.StartTracked(compact);
-            Thread.Sleep(100);  // <-- ugly hack https://stackoverflow.com/a/1016863/14274419
-            SetWindowText(compact.MainWindowHandle, "Compressing Python installation... Do not close this window!");
-            compact.WaitForExit();
+
+            await Task.Run(() =>
+            {
+                Thread.Sleep(100);  // <-- ugly hack https://stackoverflow.com/a/1016863/14274419
+                SetWindowText(compact.MainWindowHandle, "Compressing Python installation... Do not close this window!");
+                compact.WaitForExit();
+            });
         }
 
         static int lastPercentage = 0;
@@ -185,14 +223,24 @@ namespace Cupscale.OS
         static bool isExtracting;
         static async Task ExtractAsync()
         {
-            await Task.Run(async () =>
+            await Task.Run(() =>
             {
-                SevenZipNET.SevenZipExtractor.Path7za = Path.Combine(Installer.path, "7za.exe");
-                SevenZipNET.SevenZipExtractor extractor = new SevenZipNET.SevenZipExtractor(downloadPath);
-                await Task.Delay(1);
-                extractor.ExtractAll(Installer.path, true, true);
-                File.Delete(downloadPath);
-                isExtracting = false;
+                try
+                {
+                    string path7za = Path.Combine(Installer.path, "7za.exe");
+
+                    if (!File.Exists(path7za))     // Not shipped in bin; bundled as resource
+                        File.WriteAllBytes(path7za, Properties.Resources.x64_7za);
+
+                    SevenZipNET.SevenZipExtractor.Path7za = path7za;
+                    SevenZipNET.SevenZipExtractor extractor = new SevenZipNET.SevenZipExtractor(downloadPath);
+                    extractor.ExtractAll(Installer.path, true, true);
+                    File.Delete(downloadPath);
+                }
+                finally
+                {
+                    isExtracting = false;
+                }
             });
         }
 
@@ -225,6 +273,12 @@ namespace Cupscale.OS
 
         static void Print(string s, bool replaceLastLine = false)
         {
+            if (logBox.InvokeRequired)
+            {
+                logBox.BeginInvoke((Action)(() => Print(s, replaceLastLine)));
+                return;
+            }
+
             if (replaceLastLine)
             {
                 logBox.Text = logBox.Text.Remove(logBox.Text.LastIndexOf(Environment.NewLine));
