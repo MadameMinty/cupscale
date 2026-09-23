@@ -72,11 +72,14 @@ class RRDBNet(nn.Module):
 
         self.key_arr = list(self.state.keys())
 
-        self.in_nc: int = self.state[self.key_arr[0]].shape[1]
-        self.out_nc: int = self.state[self.key_arr[-1]].shape[0]
+        # By name, not key order: .safetensors files store keys alphabetically
+        first_conv = self.state["model.0.weight"]
+        last_layer = max(int(k.split(".")[1]) for k in self.state if re.fullmatch(r"model\.\d+\.weight", k))
+        self.in_nc: int = first_conv.shape[1]
+        self.out_nc: int = self.state[f"model.{last_layer}.weight"].shape[0]
 
         self.scale: int = self.get_scale()
-        self.num_filters: int = self.state[self.key_arr[0]].shape[0]
+        self.num_filters: int = first_conv.shape[0]
 
         self.supports_fp16 = True
         self.supports_bfp16 = True

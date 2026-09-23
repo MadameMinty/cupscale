@@ -37,7 +37,8 @@ class SRVGGNetCompact(nn.Module):
 
         self.state = unwrap_params(self.state)
 
-        self.key_arr = list(self.state.keys())
+        # Layer order, weight before bias; .safetensors files store keys alphabetically
+        self.key_arr = sorted(self.state.keys(), key=lambda k: (int(k.split(".")[1]), not k.endswith("weight")))
 
         self.in_nc = self.get_in_nc()
         self.num_feat = self.get_num_feats()

@@ -138,6 +138,35 @@ def test_load_state_dict_reads_safetensors(tmp_path):
     assert torch.equal(ops.load_state_dict(str(path))["w"], torch.arange(4.0))
 
 
+def test_esrgan_ignores_key_order():
+    """Regression: .safetensors stores keys alphabetically; ESRGAN read in/out channels from the first/last key."""
+    pytest.importorskip("spandrel")
+    from spandrel.architectures.ESRGAN.__arch.RRDB import RRDBNet as Reference
+    from utils.architecture.RRDB import RRDBNet
+
+    state = Reference(in_nc=3, out_nc=1, num_filters=8, num_blocks=2, scale=2).state_dict()
+    model = RRDBNet(dict(sorted(state.items())))
+
+    assert (model.in_nc, model.out_nc, model.num_filters, model.num_blocks, model.scale) == (3, 1, 8, 2, 2)
+
+
+def test_compact_ignores_key_order():
+    from utils.architecture.SRVGG import SRVGGNetCompact
+
+    feat, convs = 4, 5  # 13 layers, so "body.10" sorts before "body.2"
+    state = {"body.0.weight": torch.zeros(feat, 3, 3, 3), "body.0.bias": torch.zeros(feat), "body.1.weight": torch.zeros(feat)}
+    for i in range(convs):
+        state[f"body.{2 + 2 * i}.weight"] = torch.zeros(feat, feat, 3, 3)
+        state[f"body.{2 + 2 * i}.bias"] = torch.zeros(feat)
+        state[f"body.{3 + 2 * i}.weight"] = torch.zeros(feat)
+    last = 2 + 2 * convs
+    state[f"body.{last}.weight"], state[f"body.{last}.bias"] = torch.zeros(3 * 4, feat, 3, 3), torch.zeros(3 * 4)
+
+    model = SRVGGNetCompact(dict(sorted(state.items())))
+
+    assert (model.in_nc, model.num_feat, model.num_conv, model.scale) == (3, feat, convs, 2)
+
+
 def test_unwrap_params_prefers_ema():
     from utils.architecture.block import unwrap_params
 
