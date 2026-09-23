@@ -19,6 +19,7 @@ from utils.onnx_to_ncnn import Onnx2NcnnConverter
 from utils.onnx_model import OnnxModel
 from utils.torch_types import PyTorchModel
 from utils.pytorch_model_loading import load_state_dict
+from utils.dataops import load_state_dict as safe_load_state_dict
 
 major_version = 1
 minor_version = 0
@@ -55,9 +56,7 @@ def LoadTorchModel(path, fp16=False) -> PyTorchModel:
         try:
             timer = Timer()
             print(f"Reading state dict from path: {path}")
-            state_dict = torch.load(
-                path, map_location=torch.device(device)
-            )
+            state_dict = safe_load_state_dict(path)
             model = load_state_dict(state_dict)
 
             for _, v in model.named_parameters():

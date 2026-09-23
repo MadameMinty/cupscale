@@ -2,12 +2,41 @@
 # -*- coding: utf-8 -*-
 
 import gc
+import warnings
+from pathlib import Path
 
+import cv2
 import numpy as np
 import torch
 import logging
 
-logging.basicConfig(level=logging.DEBUG, filename="prog", filemode="w", format="%(message)s")
+
+def imread_unicode(path) -> np.ndarray:
+    """cv2.imread that works with non-ASCII Windows paths. Returns None if unreadable."""
+    data = np.fromfile(str(path), dtype=np.uint8)
+    if data.size == 0:
+        return None
+    return cv2.imdecode(data, cv2.IMREAD_UNCHANGED)
+
+
+def imwrite_unicode(path, img: np.ndarray, params=None) -> None:
+    """cv2.imwrite that works with non-ASCII Windows paths."""
+    ok, buf = cv2.imencode(Path(path).suffix or ".png", img, params or [])
+    if not ok:
+        raise IOError(f"Failed to encode {path}")
+    buf.tofile(str(path))
+
+
+def load_state_dict(path: str):
+    """torch.load to CPU without executing pickled code; falls back for legacy checkpoints."""
+    try:
+        return torch.load(path, map_location="cpu", weights_only=True)
+    except TypeError:  # torch < 1.13 has no weights_only
+        return torch.load(path, map_location="cpu")
+    except Exception as e:
+        warnings.warn(f'"{path}" is not a plain state dict ({e}); loading it with full unpickling.')
+        return torch.load(path, map_location="cpu", weights_only=False)
+
 
 def bgr_to_rgb(image: torch.Tensor) -> torch.Tensor:
     # flip image channels

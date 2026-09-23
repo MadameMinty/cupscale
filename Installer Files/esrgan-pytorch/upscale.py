@@ -176,7 +176,10 @@ class Upscale:
                     img_path.unlink(missing_ok=True)
                 continue
             # read image
-            img = cv2.imread(str(img_path.absolute()), cv2.IMREAD_UNCHANGED)
+            img = ops.imread_unicode(img_path.absolute())
+            if img is None:
+                self.log.error(f'Could not read "{img_input_path_rel}", skipping.')
+                continue
             if len(img.shape) < 3:
                 img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
 
@@ -223,7 +226,11 @@ class Upscale:
             if self.seamless:
                 rlt = self.crop_seamless(rlt, final_scale)
 
-            cv2.imwrite(str(img_output_path_rel.absolute()), rlt)
+            if rlt.dtype != np.uint8:
+                rlt = np.clip(rlt, 0, 255).astype(np.uint8)
+
+            # Intermediate file (Cupscale re-encodes it), so favor speed over size
+            ops.imwrite_unicode(img_output_path_rel.absolute(), rlt, [cv2.IMWRITE_PNG_COMPRESSION, 1])
 
             if self.delete_input:
                 img_path.unlink(missing_ok=True)
@@ -470,7 +477,7 @@ if __name__ == "__main__":
 
 
     logging.basicConfig(
-        level=logging.DEBUG,
+        level=logging.INFO,
         format="%(message)s",
         filename="prog",
         filemode="w",
