@@ -348,8 +348,24 @@ namespace Cupscale.UI
         {
             try
             {
-                MagickImage img = ImgUtils.GetMagickImage(path);
-                if (img.Width > 8192 || img.Height > 8192)
+                int width, height;
+
+                try
+                {
+                    var info = new MagickImageInfo(path);   // Header only
+                    width = info.Width;
+                    height = info.Height;
+                }
+                catch (MagickException)     // e.g. DDS variants only DdsFileTypePlus can read
+                {
+                    using (MagickImage img = ImgUtils.GetMagickImage(path))
+                    {
+                        width = img.Width;
+                        height = img.Height;
+                    }
+                }
+
+                if (width > 8192 || height > 8192)
                 {
                     Program.ShowMessage("Image is too big for the preview!\nPlease use images with less than 8192 pixels on either side.", "Error");
                     return false;
