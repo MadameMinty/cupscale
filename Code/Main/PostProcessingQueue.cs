@@ -41,11 +41,17 @@ namespace Cupscale.Cupscale
             public Upscale.Overwrite Overwrite;
         }
 
-        public static void Start (string outpath)
+        static CopyMode? copyModeOverride;
+        static Upscale.Overwrite? overwriteOverride;
+
+        /// <summary> Starts a run. Overrides replace the UI's copy/overwrite settings for this run only. </summary>
+        public static void Start (string outpath, CopyMode? copyModeOverride = null, Upscale.Overwrite? overwriteOverride = null)
         {
             Logger.Log("[Queue] Start()");
             Interlocked.Increment(ref generation);
             currentOutPath = outpath;
+            PostProcessingQueue.copyModeOverride = copyModeOverride;
+            PostProcessingQueue.overwriteOverride = overwriteOverride;
             outputFileQueue.Clear();
             queuedFiles.Clear();
             processedFiles.Clear();
@@ -115,8 +121,8 @@ namespace Cupscale.Cupscale
                 Generation = generation,
                 Format = PreviewUi.outputFormat.Text,
                 OutPath = currentOutPath,
-                CopyMode = copyMode,
-                Overwrite = Upscale.overwriteMode,
+                CopyMode = copyModeOverride ?? copyMode,
+                Overwrite = overwriteOverride ?? Upscale.overwriteMode,
             };
 
             int maxWorkers = Math.Max(1, Math.Min(4, Environment.ProcessorCount / 2));
