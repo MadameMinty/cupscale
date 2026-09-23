@@ -45,6 +45,7 @@ namespace Cupscale
             catch
             {
                 Program.ShowMessage("Error creating clipboard preview!", "Error");
+                return;
             }
 
             int comparisonMod = 1;
@@ -134,6 +135,7 @@ namespace Cupscale
             catch
             {
                 Program.ShowMessage("Error creating clipboard preview!", "Error");
+                return;
             }
             
 
