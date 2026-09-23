@@ -136,11 +136,13 @@
             this.panel9 = new System.Windows.Forms.Panel();
             this.pictureBox13 = new System.Windows.Forms.PictureBox();
             this.pictureBox11 = new System.Windows.Forms.PictureBox();
-            this.h265 = new System.Windows.Forms.CheckBox();
+            this.vidQuality = new System.Windows.Forms.ComboBox();
             this.label37 = new System.Windows.Forms.Label();
             this.pictureBox12 = new System.Windows.Forms.PictureBox();
             this.gifskiQ = new System.Windows.Forms.TextBox();
-            this.crf = new System.Windows.Forms.TextBox();
+            this.vidEncoder = new System.Windows.Forms.ComboBox();
+            this.vidCustomArgs = new System.Windows.Forms.TextBox();
+            this.vidCustomArgsLabel = new System.Windows.Forms.Label();
             this.label40 = new System.Windows.Forms.Label();
             this.label41 = new System.Windows.Forms.Label();
             this.label42 = new System.Windows.Forms.Label();
@@ -1420,11 +1422,13 @@
             this.panel9.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.panel9.Controls.Add(this.pictureBox13);
             this.panel9.Controls.Add(this.pictureBox11);
-            this.panel9.Controls.Add(this.h265);
+            this.panel9.Controls.Add(this.vidQuality);
             this.panel9.Controls.Add(this.label37);
             this.panel9.Controls.Add(this.pictureBox12);
             this.panel9.Controls.Add(this.gifskiQ);
-            this.panel9.Controls.Add(this.crf);
+            this.panel9.Controls.Add(this.vidEncoder);
+            this.panel9.Controls.Add(this.vidCustomArgs);
+            this.panel9.Controls.Add(this.vidCustomArgsLabel);
             this.panel9.Controls.Add(this.label40);
             this.panel9.Controls.Add(this.label41);
             this.panel9.Controls.Add(this.label42);
@@ -1438,37 +1442,38 @@
             // 
             this.pictureBox13.Anchor = System.Windows.Forms.AnchorStyles.Left;
             this.pictureBox13.Image = global::Cupscale.Properties.Resources.questmark;
-            this.pictureBox13.Location = new System.Drawing.Point(138, 76);
+            this.pictureBox13.Location = new System.Drawing.Point(100, 76);
             this.pictureBox13.Name = "pictureBox13";
             this.pictureBox13.Size = new System.Drawing.Size(22, 22);
             this.pictureBox13.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.pictureBox13.TabIndex = 23;
             this.pictureBox13.TabStop = false;
-            this.toolTip.SetToolTip(this.pictureBox13, "h264/h265 quality level.\r\nHigher is better.\r\nFor reference, 16 is high, 22 is med" +
-        "ium, 28 is low.\r\nYou can use lower values if h265 is enabled as it\'s more effici" +
-        "ent.");
+            this.toolTip.SetToolTip(this.pictureBox13, "Video encoder for MP4 output.\r\nNVENC runs on NVIDIA GPUs and is much faster; AV1 NVENC needs an RTX 40 or newer.\r\nOnly encoders your ffmpeg build supports are listed.\r\nCustom: enter your own codec arguments, e.g. -c:v libx264 -crf 16 -preset slow");
             // 
             // pictureBox11
             // 
             this.pictureBox11.Anchor = System.Windows.Forms.AnchorStyles.Left;
             this.pictureBox11.Image = global::Cupscale.Properties.Resources.questmark;
-            this.pictureBox11.Location = new System.Drawing.Point(127, 106);
+            this.pictureBox11.Location = new System.Drawing.Point(96, 106);
             this.pictureBox11.Name = "pictureBox11";
             this.pictureBox11.Size = new System.Drawing.Size(22, 22);
             this.pictureBox11.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.pictureBox11.TabIndex = 22;
             this.pictureBox11.TabStop = false;
-            this.toolTip.SetToolTip(this.pictureBox11, "Use h265 instead of h264 for better quality/filesize ratio.\r\nHowever, compatibili" +
-        "ty is worse, so don\'t use this for online sharing.");
+            this.toolTip.SetToolTip(this.pictureBox11, "Low: small files for sharing.\r\nNormal: visually transparent for most content.\r\nHigh: lossless where the encoder supports it (for further processing), otherwise near-lossless. Files are large.");
             // 
-            // h265
+            // vidQuality
             // 
-            this.h265.AutoSize = true;
-            this.h265.Location = new System.Drawing.Point(220, 110);
-            this.h265.Name = "h265";
-            this.h265.Size = new System.Drawing.Size(18, 17);
-            this.h265.TabIndex = 21;
-            this.h265.UseVisualStyleBackColor = true;
+            this.vidQuality.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            this.vidQuality.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.vidQuality.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.vidQuality.ForeColor = System.Drawing.Color.White;
+            this.vidQuality.FormattingEnabled = true;
+            this.vidQuality.Location = new System.Drawing.Point(220, 107);
+            this.vidQuality.Name = "vidQuality";
+            this.vidQuality.Size = new System.Drawing.Size(220, 24);
+            this.vidQuality.TabIndex = 21;            this.vidQuality.Items.AddRange(new object[] { "Low", "Normal", "High" });
+
             // 
             // label37
             // 
@@ -1477,13 +1482,13 @@
             this.label37.Name = "label37";
             this.label37.Size = new System.Drawing.Size(142, 16);
             this.label37.TabIndex = 20;
-            this.label37.Text = "MP4: Use H265 Codec";
+            this.label37.Text = "MP4: Quality";
             // 
             // pictureBox12
             // 
             this.pictureBox12.Anchor = System.Windows.Forms.AnchorStyles.Left;
             this.pictureBox12.Image = global::Cupscale.Properties.Resources.questmark;
-            this.pictureBox12.Location = new System.Drawing.Point(71, 136);
+            this.pictureBox12.Location = new System.Drawing.Point(71, 166);
             this.pictureBox12.Name = "pictureBox12";
             this.pictureBox12.Size = new System.Drawing.Size(22, 22);
             this.pictureBox12.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
@@ -1495,24 +1500,46 @@
             // 
             this.gifskiQ.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
             this.gifskiQ.ForeColor = System.Drawing.Color.White;
-            this.gifskiQ.Location = new System.Drawing.Point(220, 137);
+            this.gifskiQ.Location = new System.Drawing.Point(220, 167);
             this.gifskiQ.Name = "gifskiQ";
             this.gifskiQ.Size = new System.Drawing.Size(50, 22);
             this.gifskiQ.TabIndex = 13;
             // 
-            // crf
+            // vidEncoder
             // 
-            this.crf.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
-            this.crf.ForeColor = System.Drawing.Color.White;
-            this.crf.Location = new System.Drawing.Point(220, 77);
-            this.crf.Name = "crf";
-            this.crf.Size = new System.Drawing.Size(50, 22);
-            this.crf.TabIndex = 12;
+            this.vidEncoder.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            this.vidEncoder.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.vidEncoder.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.vidEncoder.ForeColor = System.Drawing.Color.White;
+            this.vidEncoder.FormattingEnabled = true;
+            this.vidEncoder.Location = new System.Drawing.Point(220, 77);
+            this.vidEncoder.Name = "vidEncoder";
+            this.vidEncoder.Size = new System.Drawing.Size(220, 24);
+            this.vidEncoder.TabIndex = 12;            this.vidEncoder.SelectedIndexChanged += new System.EventHandler(this.vidEncoder_SelectedIndexChanged);
+            //
+            // vidCustomArgs
+            //
+            this.vidCustomArgs.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            this.vidCustomArgs.ForeColor = System.Drawing.Color.White;
+            this.vidCustomArgs.Location = new System.Drawing.Point(220, 137);
+            this.vidCustomArgs.Name = "vidCustomArgs";
+            this.vidCustomArgs.Size = new System.Drawing.Size(220, 22);
+            this.vidCustomArgs.TabIndex = 24;
+            //
+            // vidCustomArgsLabel
+            //
+            this.vidCustomArgsLabel.AutoSize = true;
+            this.vidCustomArgsLabel.Location = new System.Drawing.Point(6, 140);
+            this.vidCustomArgsLabel.Name = "vidCustomArgsLabel";
+            this.vidCustomArgsLabel.Size = new System.Drawing.Size(120, 16);
+            this.vidCustomArgsLabel.TabIndex = 25;
+            this.vidCustomArgsLabel.Text = "MP4: Custom Args";
+
             // 
             // label40
             // 
             this.label40.AutoSize = true;
-            this.label40.Location = new System.Drawing.Point(6, 140);
+            this.label40.Location = new System.Drawing.Point(6, 170);
             this.label40.Name = "label40";
             this.label40.Size = new System.Drawing.Size(75, 16);
             this.label40.TabIndex = 4;
@@ -1525,7 +1552,7 @@
             this.label41.Name = "label41";
             this.label41.Size = new System.Drawing.Size(155, 16);
             this.label41.TabIndex = 2;
-            this.label41.Text = "MP4: Quality (CRF Level)";
+            this.label41.Text = "MP4: Encoder";
             // 
             // label42
             // 
@@ -1919,11 +1946,13 @@
         private System.Windows.Forms.TableLayoutPanel tableLayoutPanel5;
         private System.Windows.Forms.Panel panel9;
         private System.Windows.Forms.PictureBox pictureBox11;
-        private System.Windows.Forms.CheckBox h265;
+        private System.Windows.Forms.ComboBox vidQuality;
         private System.Windows.Forms.Label label37;
         private System.Windows.Forms.PictureBox pictureBox12;
         private System.Windows.Forms.TextBox gifskiQ;
-        private System.Windows.Forms.TextBox crf;
+        private System.Windows.Forms.ComboBox vidEncoder;
+        private System.Windows.Forms.TextBox vidCustomArgs;
+        private System.Windows.Forms.Label vidCustomArgsLabel;
         private System.Windows.Forms.Label label40;
         private System.Windows.Forms.Label label41;
         private System.Windows.Forms.Label label42;

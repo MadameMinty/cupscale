@@ -38,13 +38,13 @@ namespace Cupscale
                 DeleteSource(inputFile);
         }
 
-        public static async Task FramesToMp4 (string inputDir, bool useH265, int crf, float fps, string prefix, bool delSrc)
+        /// <summary> Encodes numbered PNG frames to MP4. codecArgs come last so custom arguments can override the defaults. </summary>
+        public static async Task FramesToMp4 (string inputDir, string codecArgs, float fps, string prefix, bool delSrc)
         {
             int nums = IoUtils.GetFilenameCounterLength(Directory.GetFiles(inputDir, "*.png")[0], prefix);
-            string enc = "libx264";
-            if (useH265) enc = "libx265";
-            string args = " -framerate " + FpsToArg(fps) + " -i \"" + inputDir + "\\" + prefix + "%0" + nums + "d.png\" -c:v " + enc
-                + " -crf " + crf + " -pix_fmt yuv420p -movflags +faststart -vf \"crop = trunc(iw / 2) * 2:trunc(ih / 2) * 2\"  -c:a copy \"" + inputDir + ".mp4\"";
+            string args = " -framerate " + FpsToArg(fps) + " -i \"" + inputDir + "\\" + prefix + "%0" + nums + "d.png\""
+                + " -pix_fmt yuv420p -vf \"crop=trunc(iw/2)*2:trunc(ih/2)*2\" " + codecArgs + " -movflags +faststart \"" + inputDir + ".mp4\"";
+            Logger.Log("[FFCmds] Video codec args: " + codecArgs);
             await FFmpeg.Run(args);
             if (delSrc)
                 DeleteSource(inputDir);

@@ -76,8 +76,7 @@ namespace Cupscale.Forms
             ConfigParser.LoadGuiElement(useMozJpeg);
 
             // Video
-            ConfigParser.LoadGuiElement(crf);
-            ConfigParser.LoadGuiElement(h265);
+            LoadVideoEncoders();
             ConfigParser.LoadGuiElement(gifskiQ);
             ConfigParser.LoadGuiElement(vidEnableAudio);
             ConfigParser.LoadGuiElement(ffmpegPath);
@@ -149,8 +148,9 @@ namespace Cupscale.Forms
             ConfigParser.SaveGuiElement(useMozJpeg);
             // Video
 
-            ConfigParser.SaveGuiElement(crf);
-            ConfigParser.SaveGuiElement(h265);
+            Config.Set("vidEncoder", vidEncoder.Text);
+            Config.Set("vidQuality", vidQuality.Text);
+            Config.Set("vidCustomArgs", vidCustomArgs.Text.Trim());
             ConfigParser.SaveGuiElement(gifskiQ);
             ConfigParser.SaveGuiElement(vidEnableAudio);
             ConfigParser.SaveGuiElement(ffmpegPath);
@@ -161,11 +161,40 @@ namespace Cupscale.Forms
             ConfigParser.SaveComboxIndex(cmdDebugMode);
         }
 
+        /// <summary> Lists encoders the configured ffmpeg and GPU support, plus Custom. </summary>
+        void LoadVideoEncoders ()
+        {
+            var nvidiaArchs = NvApi.gpuList.Select(g => NvApi.GetArch(g));
+            vidEncoder.Items.Clear();
+
+            foreach (var e in VideoEncoders.Available(VideoEncoders.GetFfmpegEncoders(), nvidiaArchs))
+                vidEncoder.Items.Add(e.Name);
+
+            vidEncoder.Items.Add(VideoEncoders.Custom);
+            string saved = Config.Get("vidEncoder");
+            vidEncoder.SelectedItem = vidEncoder.Items.Contains(saved) ? saved : (vidEncoder.Items.Contains(VideoEncoders.DefaultName) ? VideoEncoders.DefaultName : VideoEncoders.Custom);
+            string quality = Config.Get("vidQuality");
+            vidQuality.SelectedItem = vidQuality.Items.Contains(quality) ? quality : "Normal";
+            vidCustomArgs.Text = Config.Get("vidCustomArgs");
+            UpdateVideoEncoderControls();
+        }
+
+        void UpdateVideoEncoderControls ()
+        {
+            bool custom = vidEncoder.Text == VideoEncoders.Custom;
+            vidQuality.Enabled = !custom;
+            vidCustomArgs.Enabled = custom;
+        }
+
+        private void vidEncoder_SelectedIndexChanged (object sender, EventArgs e)
+        {
+            UpdateVideoEncoderControls();
+        }
+
         void Clamp ()
         {
             jpegQ.Text = jpegQ.GetInt().Clamp(0, 100).ToString();
             webpQ.Text = webpQ.GetInt().Clamp(0, 100).ToString();
-            crf.Text = crf.GetInt().Clamp(0, 51).ToString();
             gifskiQ.Text = gifskiQ.GetInt().Clamp(0, 100).ToString();
         }
 
