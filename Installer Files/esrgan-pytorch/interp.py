@@ -2,12 +2,7 @@ import sys
 import torch
 from collections import OrderedDict
 
-
-def load(path):
-    try:
-        return torch.load(path, map_location="cpu", weights_only=True)
-    except TypeError:  # torch < 1.13 has no weights_only
-        return torch.load(path, map_location="cpu")
+from utils.dataops import load_state_dict as load
 
 
 alpha = float(sys.argv[3])
