@@ -9,6 +9,7 @@ Install it by hosting py.7z and setting "pythonRuntimeUrl" (Turing or newer) or
 CupscaleData\bin (so that bin\py\python.exe exists).
 
 CUDA builds: cu132/cu128 cover sm_75 (RTX 20) .. sm_120 (RTX 50). For GTX 900/10 use -Cuda cu126.
+-Cpu builds a CPU-only torch instead (py-cpu.7z; not part of regular releases).
 
 Requires: uv, 7-Zip (7z.exe/7za.exe in PATH, or the bundled Code\Resources\7za.exe).
 #>
@@ -16,13 +17,15 @@ param(
     [string]$OutDir = (Join-Path $PSScriptRoot "..\build\python-runtime"),
     [string]$PythonVersion = "3.14",
     [string]$Cuda = "cu132",       # Needs NVIDIA driver 580+; cu128 works from 570
+    [switch]$Cpu,                  # CPU-only torch; overrides -Cuda
     [string]$TorchVersion = ""      # e.g. "2.8.0"; empty = latest for the CUDA index
 )
 
 $ErrorActionPreference = "Stop"
 $OutDir = [IO.Path]::GetFullPath($OutDir)
 $pyDir = Join-Path $OutDir "py"
-$archive = Join-Path $OutDir "py.7z"
+$archive = Join-Path $OutDir ($(if ($Cpu) { "py-cpu.7z" } else { "py.7z" }))
+$torchIndex = if ($Cpu) { "cpu" } else { $Cuda }
 
 if (Test-Path $pyDir) { Remove-Item -Recurse -Force $pyDir }
 New-Item -ItemType Directory -Force $OutDir | Out-Null
@@ -38,7 +41,7 @@ $python = Join-Path $pyDir "python.exe"
 
 $torch = if ($TorchVersion) { "torch==$TorchVersion" } else { "torch" }
 
-uv pip install --python $python --break-system-packages --index-url "https://download.pytorch.org/whl/$Cuda" $torch
+uv pip install --python $python --break-system-packages --index-url "https://download.pytorch.org/whl/$torchIndex" $torch
 if ($LASTEXITCODE -ne 0) { throw "torch install failed" }
 
 uv pip install --python $python --break-system-packages numpy opencv-python-headless onnx onnxoptimizer
