@@ -43,7 +43,7 @@ namespace Cupscale
             int nums = IoUtils.GetFilenameCounterLength(Directory.GetFiles(inputDir, "*.png")[0], prefix);
             string enc = "libx264";
             if (useH265) enc = "libx265";
-            string args = " -framerate " + fps.ToString().Replace(",", ".") + " -i \"" + inputDir + "\\" + prefix + "%0" + nums + "d.png\" -c:v " + enc
+            string args = " -framerate " + FpsToArg(fps) + " -i \"" + inputDir + "\\" + prefix + "%0" + nums + "d.png\" -c:v " + enc
                 + " -crf " + crf + " -pix_fmt yuv420p -movflags +faststart -vf \"crop = trunc(iw / 2) * 2:trunc(ih / 2) * 2\"  -c:a copy \"" + inputDir + ".mp4\"";
             await FFmpeg.Run(args);
             if (delSrc)
@@ -182,6 +182,18 @@ namespace Cupscale
                 }
             }
             return 0f;
+        }
+
+        /// <summary> ffmpeg prints NTSC rates rounded (23.98); use exact fractions (24000/1001) to avoid A/V drift. </summary>
+        public static string FpsToArg (float fps)
+        {
+            foreach (int baseFps in new[] { 24, 30, 48, 60, 120, 240 })
+            {
+                if (Math.Abs(fps - baseFps * 1000f / 1001f) < 0.006f)
+                    return $"{baseFps * 1000}/1001";
+            }
+
+            return fps.ToString(CultureInfo.InvariantCulture);
         }
 
         static void DeleteSource (string path)
