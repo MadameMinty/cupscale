@@ -225,7 +225,7 @@ namespace Cupscale.OS
             }
 		}
 
-		/// <summary> Parses NCNN progress lines like "12.50%" regardless of system locale. </summary>
+		/// <summary> Parses NCNN progress lines like "12.50%", or "12,50%" (NCNN prints using the system locale). </summary>
 		public static bool TryParsePercent(string line, out float percent)
 		{
 			percent = 0f;
@@ -234,7 +234,7 @@ namespace Cupscale.OS
 			if (string.IsNullOrEmpty(s) || !s.EndsWith("%"))
 				return false;
 
-			return float.TryParse(s.TrimEnd('%').Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out percent);
+			return float.TryParse(s.TrimEnd('%').Trim().Replace(',', '.'), NumberStyles.Float, CultureInfo.InvariantCulture, out percent);
 		}
 	}
 }

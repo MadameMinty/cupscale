@@ -11,6 +11,7 @@ namespace CupscaleTests
     {
         [Theory]
         [InlineData("12.50%", 12.5f)]
+        [InlineData("91,67%", 91.67f)]
         [InlineData("  100.00%  ", 100f)]
         [InlineData("0%", 0f)]
         public void TryParsePercent_ParsesDotDecimals_UnderCommaLocale(string line, float expected)
