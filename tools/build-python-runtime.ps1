@@ -47,16 +47,29 @@ if ($LASTEXITCODE -ne 0) { throw "torch install failed" }
 uv pip install --python $python --break-system-packages numpy opencv-python-headless onnx onnxoptimizer
 if ($LASTEXITCODE -ne 0) { throw "package install failed" }
 
-& $python -c "import torch, cv2, numpy, onnx, onnxoptimizer; print('torch', torch.__version__, 'cuda', torch.version.cuda, 'archs', torch.cuda.get_arch_list())"
-if ($LASTEXITCODE -ne 0) { throw "runtime import check failed" }
-
-# Slim down: bytecode caches, test suites, headers/static libs not needed at runtime
+# Slim down: bytecode caches, tests, headers/static libs, Tk/IDLE, packaging tools and entry-point exes
 Get-ChildItem $pyDir -Recurse -Directory -Filter "__pycache__" | Remove-Item -Recurse -Force
-foreach ($rel in "Lib\test", "Lib\site-packages\torch\include", "Lib\site-packages\torch\test") {
+$prune = @(
+    "include", "libs", "share", "Scripts",
+    "Lib\test", "Lib\idlelib", "Lib\tkinter", "Lib\turtledemo", "Lib\ensurepip", "Lib\turtle.py",
+    "DLLs\tcl90.dll", "DLLs\tcl9tk90.dll", "DLLs\libtommath.dll", "DLLs\_tkinter.pyd", "DLLs\_ctypes_test.pyd",
+    "Lib\site-packages\pip", "Lib\site-packages\setuptools", "Lib\site-packages\pkg_resources",
+    "Lib\site-packages\_distutils_hack", "Lib\site-packages\distutils-precedence.pth",
+    "Lib\site-packages\torch\include", "Lib\site-packages\torch\test"
+)
+foreach ($rel in $prune) {
     $p = Join-Path $pyDir $rel
     if (Test-Path $p) { Remove-Item -Recurse -Force $p }
 }
+Get-ChildItem (Join-Path $pyDir "Lib") -Directory -Filter "tcl*" | Remove-Item -Recurse -Force
+Get-ChildItem (Join-Path $pyDir "Lib\site-packages") -Directory -Filter "*.dist-info" |
+    Where-Object { $_.Name -match '^(pip|setuptools)-' } | Remove-Item -Recurse -Force
+Get-ChildItem (Join-Path $pyDir "DLLs") -Filter "_test*.pyd" | Remove-Item -Force
 Get-ChildItem (Join-Path $pyDir "Lib\site-packages\torch\lib") -Filter "*.lib" -ErrorAction SilentlyContinue | Remove-Item -Force
+
+& $python -c "import torch, torch.nn.functional, cv2, numpy, onnx, onnxoptimizer; print('torch', torch.__version__, 'cuda', torch.version.cuda, 'archs', torch.cuda.get_arch_list())"
+if ($LASTEXITCODE -ne 0) { throw "runtime import check failed" }
+Get-ChildItem $pyDir -Recurse -Directory -Filter "__pycache__" | Remove-Item -Recurse -Force     # Created by the check
 
 $sevenZip = (Get-Command 7z, 7za -ErrorAction SilentlyContinue | Select-Object -First 1).Source
 if (-not $sevenZip) { $sevenZip = Join-Path $PSScriptRoot "..\Code\Resources\7za.exe" }
