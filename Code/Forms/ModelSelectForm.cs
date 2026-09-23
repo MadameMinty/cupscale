@@ -91,7 +91,8 @@ namespace Cupscale.Forms
             }
         }
 
-        private void BuildTree(DirectoryInfo directoryInfo, TreeNodeCollection nodeCollection)
+        /// <summary> Adds a node per folder with models; model nodes are keyed by full path. </summary>
+        internal static void BuildTree(DirectoryInfo directoryInfo, TreeNodeCollection nodeCollection)
         {
             TreeNode currNode = nodeCollection.Add(directoryInfo.Name);
 

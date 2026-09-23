@@ -67,6 +67,8 @@ namespace Cupscale.Main
 			UiHelpers.InitCombox(batchOutMode, 0);
 			UiHelpers.InitCombox(preprocessMode, 0);
 			UiHelpers.InitCombox(batchCacheSplitDepth, 0);
+			BatchUpscaleUI.LoadCompareModels();
+			UpdateCompareModelsBtn();
 			// Video Upscale
 			UiHelpers.InitCombox(videoPreprocessMode, 1);
 
@@ -503,6 +505,14 @@ namespace Cupscale.Main
 			//	return;
 			//}
 
+			if (htTabControl.SelectedIndex == 1 && compareModelsCheckbox.Checked)	// Uses its own model list
+			{
+				UpdateResizeMode();
+				Program.lastUpscaleIsVideo = false;
+				await BatchUpscaleUI.RunCompare(BatchUpscaleUI.compareModels, preprocessMode.SelectedIndex == 0, batchCacheSplitDepth.SelectedIndex == 1);
+				return;
+			}
+
 			if (!PreviewUi.HasValidModelSelection())
 			{
 				//Program.ShowMessage("Invalid model selection - NCNN does not support interpolation or chaining.", "Error");
@@ -712,6 +722,31 @@ namespace Cupscale.Main
 
 			if (batchOutMode.SelectedIndex == 1)
 				PostProcessingQueue.copyMode = PostProcessingQueue.CopyMode.CopyToRoot;
+		}
+
+        private void compareModelsCheckbox_CheckedChanged(object sender, EventArgs e)
+        {
+			BatchUpscaleUI.compareEnabled = compareModelsCheckbox.Checked;
+			batchOutMode.Enabled = !compareModelsCheckbox.Checked;	// Comparison always keeps folder structure
+			BatchUpscaleUI.TabSelected();
+		}
+
+        private void compareModelsBtn_Click(object sender, EventArgs e)
+        {
+			using (var form = new ModelMultiSelectForm(BatchUpscaleUI.compareModels))
+			{
+				if (form.ShowDialog() != DialogResult.OK)
+					return;
+
+				BatchUpscaleUI.SetCompareModels(form.selectedModels);
+				UpdateCompareModelsBtn();
+			}
+		}
+
+		void UpdateCompareModelsBtn ()
+        {
+			int count = BatchUpscaleUI.compareModels.Count;
+			compareModelsBtn.Text = count > 0 ? $"{count} Models..." : "Select Models...";
 		}
 
         private void advancedConfigureBtn_Click(object sender, EventArgs e)

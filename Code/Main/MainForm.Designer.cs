@@ -55,6 +55,9 @@ namespace Cupscale.Main
             this.panel12 = new System.Windows.Forms.Panel();
             this.label24 = new System.Windows.Forms.Label();
             this.batchCacheSplitDepth = new System.Windows.Forms.ComboBox();
+            this.compareModelsLabel = new System.Windows.Forms.Label();
+            this.compareModelsCheckbox = new System.Windows.Forms.CheckBox();
+            this.compareModelsBtn = new System.Windows.Forms.Button();
             this.tableLayoutPanel10 = new System.Windows.Forms.TableLayoutPanel();
             this.selectOutPathBtn = new System.Windows.Forms.Button();
             this.batchOutDir = new System.Windows.Forms.TextBox();
@@ -561,6 +564,9 @@ namespace Cupscale.Main
             // 
             // panel12
             // 
+            this.panel12.Controls.Add(this.compareModelsBtn);
+            this.panel12.Controls.Add(this.compareModelsCheckbox);
+            this.panel12.Controls.Add(this.compareModelsLabel);
             this.panel12.Controls.Add(this.label24);
             this.panel12.Controls.Add(this.batchCacheSplitDepth);
             this.panel12.Controls.Add(this.tableLayoutPanel10);
@@ -604,7 +610,46 @@ namespace Cupscale.Main
             this.batchCacheSplitDepth.Name = "batchCacheSplitDepth";
             this.batchCacheSplitDepth.Size = new System.Drawing.Size(339, 28);
             this.batchCacheSplitDepth.TabIndex = 20;
-            // 
+            //
+            // compareModelsLabel
+            //
+            this.compareModelsLabel.AutoSize = true;
+            this.compareModelsLabel.ForeColor = System.Drawing.Color.White;
+            this.compareModelsLabel.Location = new System.Drawing.Point(11, 270);
+            this.compareModelsLabel.Margin = new System.Windows.Forms.Padding(11, 10, 11, 2);
+            this.compareModelsLabel.Name = "compareModelsLabel";
+            this.compareModelsLabel.Size = new System.Drawing.Size(130, 20);
+            this.compareModelsLabel.TabIndex = 22;
+            this.compareModelsLabel.Text = "Model Comparison:";
+            //
+            // compareModelsCheckbox
+            //
+            this.compareModelsCheckbox.AutoSize = true;
+            this.compareModelsCheckbox.ForeColor = System.Drawing.Color.White;
+            this.compareModelsCheckbox.Location = new System.Drawing.Point(11, 297);
+            this.compareModelsCheckbox.Name = "compareModelsCheckbox";
+            this.compareModelsCheckbox.Size = new System.Drawing.Size(140, 24);
+            this.compareModelsCheckbox.TabIndex = 23;
+            this.compareModelsCheckbox.Text = "Compare Models";
+            this.compareModelsCheckbox.UseVisualStyleBackColor = true;
+            this.compareModelsCheckbox.CheckedChanged += new System.EventHandler(this.compareModelsCheckbox_CheckedChanged);
+            //
+            // compareModelsBtn
+            //
+            this.compareModelsBtn.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.compareModelsBtn.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            this.compareModelsBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.compareModelsBtn.ForeColor = System.Drawing.Color.White;
+            this.compareModelsBtn.Location = new System.Drawing.Point(170, 294);
+            this.compareModelsBtn.Margin = new System.Windows.Forms.Padding(11, 2, 11, 2);
+            this.compareModelsBtn.Name = "compareModelsBtn";
+            this.compareModelsBtn.Size = new System.Drawing.Size(180, 28);
+            this.compareModelsBtn.TabIndex = 24;
+            this.compareModelsBtn.Text = "Select Models...";
+            this.compareModelsBtn.UseVisualStyleBackColor = false;
+            this.compareModelsBtn.Click += new System.EventHandler(this.compareModelsBtn_Click);
+            //
             // tableLayoutPanel10
             // 
             this.tableLayoutPanel10.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
@@ -2879,6 +2924,9 @@ namespace Cupscale.Main
         private HTAlt.WinForms.HTButton patreonBtn;
         private Label label24;
         private ComboBox batchCacheSplitDepth;
+        private Label compareModelsLabel;
+        private CheckBox compareModelsCheckbox;
+        private Button compareModelsBtn;
         private HTAlt.WinForms.HTButton discordBtn;
         private Panel aiPanel;
         private Label label33;

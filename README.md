@@ -37,6 +37,7 @@ Temporary files are stored in the installation directory by default, which is wh
 - On-the-fly Model Interpolation
 - Model Chaining (Run images through multiple models at once)
 - Batch Upscaling (Load a directory or multiple single images), keeping the folder structure
+- Model Comparison in Batch mode: run images through many models and browse the results in a split-view HTML viewer
 - Video Upscaling, exported as H.264, H.265 or AV1 (CPU or NVENC) with Normal/High/Lossless presets or custom FFmpeg arguments
 - Automatic Image tiling/merging to avoid running out of VRAM
 - Pre-Processing: Optionally downscale images before upscaling

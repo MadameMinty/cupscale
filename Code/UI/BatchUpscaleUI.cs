@@ -87,18 +87,36 @@ namespace Cupscale.UI
                 Program.mainForm.SetButtonText("Upscale Images");
                 return;
             }
+            int compatFilesAmount;
+
             if (multiImgMode)
             {
-                int compatFilesAmount = IoUtils.GetAmountOfCompatibleFiles(currentInFiles);
+                compatFilesAmount = IoUtils.GetAmountOfCompatibleFiles(currentInFiles);
                 titleLabel.Text = "Loaded " + compatFilesAmount + " compatible files.";
-                Program.mainForm.SetButtonText("Upscale " + compatFilesAmount + " Images");
             }
             else
             {
-                int compatFilesAmount = IoUtils.GetAmountOfCompatibleFiles(currentInDir, true);
+                compatFilesAmount = IoUtils.GetAmountOfCompatibleFiles(currentInDir, true);
                 titleLabel.Text = "Loaded " + currentInDir.Wrap() + " - Found " + compatFilesAmount + " compatible files.";
-                Program.mainForm.SetButtonText("Upscale " + compatFilesAmount + " Images");
             }
+
+            string models = compareEnabled ? $" × {compareModels.Count} Models" : "";
+            Program.mainForm.SetButtonText($"Upscale {compatFilesAmount} Images{models}");
+        }
+
+        public static bool compareEnabled;
+        public static List<string> compareModels = new List<string>();
+
+        public static void LoadCompareModels ()
+        {
+            compareModels = Config.Get("compareModels").Split('|', StringSplitOptions.RemoveEmptyEntries).ToList();
+        }
+
+        public static void SetCompareModels (List<string> models)
+        {
+            compareModels = models;
+            Config.Set("compareModels", string.Join("|", models));
+            TabSelected();
         }
 
         public static async Task CopyImages(string[] imgs, int targetAmount = 0)
@@ -173,16 +191,7 @@ namespace Cupscale.UI
             Program.mainForm.SetProgress(2f, "Loading images...");
             await Task.Delay(20);
             Directory.CreateDirectory(imgOutDir);
-            await CopyCompatibleImagesToTemp();
-            Program.mainForm.SetProgress(3f, "Pre-Processing...");
-
-            if (preprocess)
-                await ImageProcessing.PreProcessImages(Paths.imgInPath, !bool.Parse(Config.Get("alpha")));
-            else
-            {
-                await ImageProcessing.ConvertAiIncompatibleImages(Paths.imgInPath);
-                IoUtils.AppendToFilenames(Paths.imgInPath, ".png");
-            }
+            await StageInputs(preprocess);
 
             ModelData mdl = Upscale.GetModelData();
             GetProgress(Paths.imgOutPath, IoUtils.GetAmountOfFiles(Paths.imgInPath, true));
@@ -206,6 +215,148 @@ namespace Cupscale.UI
                 Program.mainForm.SetProgress(0, $"Done - Upscaling took {(sw.ElapsedMilliseconds / 1000f).ToString("0")}s");
 
             Program.mainForm.SetBusy(false);
+        }
+
+        /// <summary> Copies inputs to imgInPath and makes them AI-readable ("{orig}.png"). </summary>
+        static async Task StageInputs (bool preprocess)
+        {
+            await CopyCompatibleImagesToTemp();
+            Program.mainForm.SetProgress(3f, "Pre-Processing...");
+
+            if (preprocess)
+                await ImageProcessing.PreProcessImages(Paths.imgInPath, !bool.Parse(Config.Get("alpha")));
+            else
+            {
+                await ImageProcessing.ConvertAiIncompatibleImages(Paths.imgInPath);
+                IoUtils.AppendToFilenames(Paths.imgInPath, ".png");
+            }
+        }
+
+        /// <summary> Upscales the loaded images with each model into outDir\{model}, then writes compare.html. </summary>
+        public static async Task RunCompare (List<string> models, bool preprocess, bool cacheSplitDepth)
+        {
+            string outRoot = outDir.Text.Trim();
+            string inRoot = multiImgMode ? currentParentDir : currentInDir;
+
+            if (string.IsNullOrWhiteSpace(inRoot))
+            {
+                Program.ShowMessage("No directory or files loaded.", "Error");
+                return;
+            }
+
+            if (!Upscale.currentAi.supportsModels)
+            {
+                Program.ShowMessage("This implementation does not support custom models.", "Error");
+                return;
+            }
+
+            bool pytorch = Upscale.currentAi == Implementations.Imps.esrganPytorch;
+            models = models.Where(m => pytorch ? File.Exists(m) : File.Exists(m) || NcnnUtils.IsDirNcnnModel(m)).ToList();     // PyTorch can't run NCNN models
+
+            if (models.Count < 1)
+            {
+                Program.ShowMessage("No usable models selected for comparison.", "Error");
+                return;
+            }
+
+            string outFull = Path.GetFullPath(outRoot).TrimEnd('\\') + "\\";
+            if (outFull.StartsWith(Path.GetFullPath(inRoot).TrimEnd('\\') + "\\", StringComparison.OrdinalIgnoreCase))
+            {
+                Program.ShowMessage("Choose an output directory outside of the input directory.", "Error");
+                return;
+            }
+
+            string[] inputFiles = (multiImgMode ? currentInFiles.Where(File.Exists) : Directory.GetFiles(currentInDir, "*", SearchOption.AllDirectories))
+                .Where(f => IoUtils.compatibleExtensions.Any(x => f.EndsWith(x, StringComparison.OrdinalIgnoreCase))).ToArray();
+            long inputBytes = inputFiles.Sum(f => new FileInfo(f).Length);
+
+            if (!IoUtils.HasEnoughDiskSpace((int)(inputBytes / 1024 / 1024), Paths.GetDataPath(), 3.0f))
+            {
+                Program.ShowMessage($"Not enough disk space on {Path.GetPathRoot(Paths.GetDataPath())} to store temporary files!", "Error");
+                return;
+            }
+
+            Program.canceled = false;
+            Upscale.currentMode = Upscale.UpscaleMode.Batch;
+            Program.mainForm.SetBusy(true);
+            string srcDir = Path.Combine(Paths.GetDataPath(), "compare-src");     // Staged once, copied to imgInPath per model
+
+            try
+            {
+                await RunCompareStaged(models, preprocess, cacheSplitDepth, outRoot, inRoot, inputFiles, srcDir);
+            }
+            catch (Exception e)
+            {
+                Logger.ErrorMessage("Model comparison failed: ", e);
+            }
+            finally
+            {
+                try { if (Directory.Exists(srcDir)) Directory.Delete(srcDir, true); } catch { }
+                IoUtils.ClearDir(Paths.imgInPath);
+                Program.mainForm.SetBusy(false);
+            }
+        }
+
+        static async Task RunCompareStaged (List<string> models, bool preprocess, bool cacheSplitDepth, string outRoot, string inRoot, string[] inputFiles, string srcDir)
+        {
+            Program.mainForm.SetProgress(2f, "Loading images...");
+            Directory.CreateDirectory(outRoot);
+            await StageInputs(preprocess);
+
+            if (Directory.Exists(srcDir)) Directory.Delete(srcDir, true);
+            Directory.Move(Paths.imgInPath, srcDir);
+            Directory.CreateDirectory(Paths.imgInPath);
+            List<string> staged = Directory.GetFiles(srcDir, "*", SearchOption.AllDirectories)
+                .Select(f => Path.GetRelativePath(srcDir, f)).Select(r => r.Substring(0, r.Length - 4)).ToList();   // Strip ".png"
+
+            bool alpha = bool.Parse(Config.Get("alpha"));
+            List<string> incomplete = new List<string>();
+            sw.Restart();
+
+            for (int i = 0; i < models.Count && !Program.canceled; i++)
+            {
+                string name = CompareRun.ModelName(models[i]);
+                string modelOut = Path.Combine(outRoot, name);
+                List<string> todo = CompareRun.InputsFor(models[i], staged, CompareRun.OutputKeys(modelOut));
+
+                if (todo.Count < 1)
+                    continue;
+
+                IoUtils.ClearDir(Paths.imgInPath);
+
+                foreach (string rel in todo)
+                {
+                    string target = Path.Combine(Paths.imgInPath, rel + ".png");
+                    Directory.CreateDirectory(Path.GetDirectoryName(target));
+                    File.Copy(Path.Combine(srcDir, rel + ".png"), target);
+                }
+
+                Program.mainForm.SetProgress(Program.GetPercentage(i, models.Count), $"Model {i + 1}/{models.Count}: {name} ({todo.Count} images)");
+                PostProcessingQueue.Start(modelOut, PostProcessingQueue.CopyMode.KeepStructure, Upscale.Overwrite.Yes);
+                ModelData mdl = new ModelData(models[i], null, ModelData.ModelMode.Single);
+
+                await Task.WhenAll(
+                    Upscale.Run(Paths.imgInPath, Paths.imgOutPath, mdl, cacheSplitDepth, alpha, PreviewUi.PreviewMode.None, false),
+                    PostProcessingQueue.Update(),
+                    PostProcessingQueue.ProcessQueue());
+
+                HashSet<string> done = CompareRun.OutputKeys(modelOut);
+                if (!Program.canceled && todo.Any(r => !done.Contains(CompareRun.Key(r))))
+                    incomplete.Add(name);
+            }
+
+            string html = CompareRun.WriteViewer(outRoot, inRoot, inputFiles);
+            Program.lastOutputDir = outRoot;
+            Program.mainForm.AfterFirstUpscale();
+
+            if (Program.canceled)
+                return;
+
+            Program.mainForm.SetProgress(0, $"Done - Compared {models.Count} models in {(sw.ElapsedMilliseconds / 1000f):0}s");
+            OsUtils.OpenUrl(html);
+
+            if (incomplete.Count > 0)
+                Program.ShowMessage("Some images failed with these models:\n\n" + string.Join("\n", incomplete), "Warning");
         }
 
         public static int upscaledImages = 0;
