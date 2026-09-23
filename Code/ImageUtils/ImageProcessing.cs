@@ -118,6 +118,9 @@ namespace Cupscale
             MagickImage img = ImgUtils.GetMagickImage(path, allowTgaFlip);
             string newExt = "png";
             bool magick = true;
+            bool mozJpeg = false;
+            bool dds = false;
+            int jpegQ = 0;
 
             Logger.Log($"[ImgProc] Converting {path} to {format}, DelSrc: {deleteSource}, Fill: {fillAlpha}, Ext: {extMode}");
             if (format == Format.PngRaw)
@@ -138,16 +141,15 @@ namespace Cupscale
             if (format == Format.Jpeg)
             {
                 newExt = "jpg";
-                int q = Config.GetInt("jpegQ");
+                jpegQ = Config.GetInt("jpegQ");
                 if (Config.GetBool("useMozJpeg"))
                 {
-                    MozJpeg.Encode(img, GetOutPath(path, newExt, extMode, overrideOutPath), q);
-                    magick = false;
+                    mozJpeg = true;
                 }
                 else
                 {
                     img.Format = MagickFormat.Jpeg;
-                    img.Quality = q;
+                    img.Quality = jpegQ;
                 }
             }
             if (format == Format.Weppy)
@@ -171,15 +173,16 @@ namespace Cupscale
             if (format == Format.DDS)
             {
                 magick = false;
-                newExt = "tga";
-                await NvCompress.PngToDds(path, GetOutPath(path, newExt, ExtMode.UseNew, ""));
+                dds = true;
+                newExt = "dds";
             }
             if (format == Format.GIF)
             {
                 img.Format = MagickFormat.Gif;
+                newExt = "gif";
             }
 
-            if (magick)
+            if (!dds)
             {
                 img = CheckColorDepth(path, img);
                 if (fillAlpha)
@@ -188,6 +191,9 @@ namespace Cupscale
 
             string outPath = GetOutPath(path, newExt, extMode, overrideOutPath);
 
+            if (dds)    // nvcompress reads the source file, so encode before the source may be deleted
+                await NvCompress.PngToDds(path, outPath);
+
             if (File.Exists(outPath))
             {
                 if (Logger.doLogIo) Logger.Log("[ImgProc] File exists at - making sure it doesn't have readonly flag");
@@ -195,10 +201,15 @@ namespace Cupscale
             }
 
             bool inPathIsOutPath = outPath.ToLower() == path.ToLower();
-            if (inPathIsOutPath)    // Force overwrite by deleting source file before writing new file - THIS IS IMPORTANT
+            if (inPathIsOutPath && !dds)    // Force overwrite by deleting source file before writing new file - THIS IS IMPORTANT
                 File.Delete(path);
 
-            if (magick)
+            if (mozJpeg)
+            {
+                MozJpeg.Encode(img, outPath, jpegQ);
+                Logger.Log("[ImgProc] Written image to " + outPath);
+            }
+            else if (magick)
             {
                 img.Write(outPath);
                 Logger.Log("[ImgProc] Written image to " + outPath);
@@ -354,12 +365,14 @@ namespace Cupscale
 
             img = ResizeImagePost(img);
 
+            string outPath = Path.ChangeExtension(path, ext);
+            string pngPath = path + ".dds-src.png";
             img.Format = MagickFormat.Png00;
-            img.Write(path);
+            img.Write(pngPath);
+            img.Dispose();
 
-            string outPath = Path.ChangeExtension(img.FileName, ext);
-
-            await NvCompress.PngToDds(path, outPath);
+            await NvCompress.PngToDds(pngPath, outPath);
+            IoUtils.TryDeleteIfExists(pngPath);
 
             if (Upscale.currentMode == Upscale.UpscaleMode.Batch)
                 PostProcessingQueue.lastOutfile = outPath;
