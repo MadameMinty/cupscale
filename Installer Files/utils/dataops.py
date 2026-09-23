@@ -4,6 +4,7 @@
 import gc
 import os
 import warnings
+from collections import OrderedDict
 from pathlib import Path
 
 import cv2
@@ -28,6 +29,14 @@ def imwrite_unicode(path, img: np.ndarray, params=None) -> None:
     part = f"{path}.part"
     buf.tofile(part)
     os.replace(part, str(path))
+
+
+def interpolate_state_dicts(a: dict, b: dict, weight_a: float, weight_b: float) -> dict:
+    """weight_a * a + weight_b * b. Keeps "params_ema"/"params" wrappers (Real-ESRGAN) so arch detection still works."""
+    for key in ("params_ema", "params"):
+        if key in a and key in b:
+            return {key: interpolate_state_dicts(a[key], b[key], weight_a, weight_b)}
+    return OrderedDict((k, weight_a * v + weight_b * b[k]) for k, v in a.items())
 
 
 def load_state_dict(path: str):

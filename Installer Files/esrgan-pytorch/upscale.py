@@ -323,12 +323,9 @@ class Upscale:
             interps = model_path.split("&")[:2]
             model_1 = ops.load_state_dict(interps[0].split("@")[0])
             model_2 = ops.load_state_dict(interps[1].split("@")[0])
-            state_dict = OrderedDict()
-            for k, v_1 in model_1.items():
-                v_2 = model_2[k]
-                state_dict[k] = (int(interps[0].split("@")[1]) / 100) * v_1 + (
-                    int(interps[1].split("@")[1]) / 100
-                ) * v_2
+            state_dict = ops.interpolate_state_dicts(
+                model_1, model_2, int(interps[0].split("@")[1]) / 100, int(interps[1].split("@")[1]) / 100
+            )
         else:
             state_dict = ops.load_state_dict(model_path)
 

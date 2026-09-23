@@ -43,6 +43,21 @@ def test_load_state_dict_falls_back_for_pickled_objects(tmp_path):
         assert "meta" in ops.load_state_dict(str(path))
 
 
+def test_interpolate_keeps_params_ema_wrapper():
+    a = {"params_ema": {"w": torch.zeros(2)}}
+    b = {"params_ema": {"w": torch.ones(2)}}
+
+    result = ops.interpolate_state_dicts(a, b, 0.25, 0.75)
+
+    assert list(result) == ["params_ema"]
+    assert torch.allclose(result["params_ema"]["w"], torch.full((2,), 0.75))
+
+
+def test_interpolate_plain_state_dicts():
+    result = ops.interpolate_state_dicts({"w": torch.ones(1)}, {"w": torch.full((1,), 3.0)}, 0.5, 0.5)
+    assert torch.allclose(result["w"], torch.full((1,), 2.0))
+
+
 def test_auto_split_matches_direct_upscale():
     img = np.random.default_rng(1).integers(0, 255, (64, 48, 3), dtype=np.uint8)
 

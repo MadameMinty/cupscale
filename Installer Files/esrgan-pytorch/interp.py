@@ -1,8 +1,7 @@
 import sys
 import torch
-from collections import OrderedDict
 
-from utils.dataops import load_state_dict as load
+from utils.dataops import interpolate_state_dicts, load_state_dict as load
 
 
 alpha = float(sys.argv[3])
@@ -12,12 +11,9 @@ net_interp_path = sys.argv[4]
 
 net_PSNR = load(net_PSNR_path)
 net_ESRGAN = load(net_ESRGAN_path)
-net_interp = OrderedDict()
 
 print('Interpolating with alpha = ', alpha)
 
-for k, v_PSNR in net_PSNR.items():
-    v_ESRGAN = net_ESRGAN[k]
-    net_interp[k] = (1 - alpha) * v_PSNR + alpha * v_ESRGAN
+net_interp = interpolate_state_dicts(net_PSNR, net_ESRGAN, 1 - alpha, alpha)
 
 torch.save(net_interp, net_interp_path)
