@@ -1,8 +1,8 @@
 <#
 Builds a release zip: build\Cupscale-<VERSION>.zip
 
-  Cupscale\Cupscale.exe
-  Cupscale\CupscaleData\bin\...   (Installer Files)
+  Cupscale.exe
+  CupscaleData\bin\...   (Installer Files)
 
 Not included, downloaded by Cupscale on demand: FFmpeg and the Python runtime (py.7z).
 #>
@@ -29,7 +29,7 @@ robocopy $installerFiles $bin /E /XD __pycache__ /XF ffmpeg.exe /NFL /NDL /NJH /
 if ($LASTEXITCODE -ge 8) { throw "robocopy failed ($LASTEXITCODE)" }     # 1-7 = success variants
 
 if (Test-Path $zip) { Remove-Item -Force $zip }
-& $7za a -tzip -mx=9 $zip $app | Out-Null
+& $7za a -tzip -mx=9 $zip (Join-Path $app "*") | Out-Null     # Contents at the zip root
 if ($LASTEXITCODE -ne 0) { throw "7za failed" }
 
 Remove-Item -Recurse -Force $stage
