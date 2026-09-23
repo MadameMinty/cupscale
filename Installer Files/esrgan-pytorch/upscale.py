@@ -104,8 +104,6 @@ class Upscale:
         self.alpha_mode = alpha_mode
         self.log = log
         self.model_cache = {}
-        if self.cache_max_split_depth and not self.cpu:
-            torch.backends.cudnn.benchmark = True  # Tile shapes repeat when split depth is cached
 
     def run(self) -> None:
         model_chain = (
