@@ -143,6 +143,7 @@
             this.vidEncoder = new System.Windows.Forms.ComboBox();
             this.vidCustomArgs = new System.Windows.Forms.TextBox();
             this.vidCustomArgsLabel = new System.Windows.Forms.Label();
+            this.vidCustomArgsHelp = new System.Windows.Forms.PictureBox();
             this.label40 = new System.Windows.Forms.Label();
             this.label41 = new System.Windows.Forms.Label();
             this.label42 = new System.Windows.Forms.Label();
@@ -1429,6 +1430,7 @@
             this.panel9.Controls.Add(this.vidEncoder);
             this.panel9.Controls.Add(this.vidCustomArgs);
             this.panel9.Controls.Add(this.vidCustomArgsLabel);
+            this.panel9.Controls.Add(this.vidCustomArgsHelp);
             this.panel9.Controls.Add(this.label40);
             this.panel9.Controls.Add(this.label41);
             this.panel9.Controls.Add(this.label42);
@@ -1523,6 +1525,7 @@
             this.vidCustomArgs.ForeColor = System.Drawing.Color.White;
             this.vidCustomArgs.Location = new System.Drawing.Point(220, 137);
             this.vidCustomArgs.Name = "vidCustomArgs";
+            this.vidCustomArgs.PlaceholderText = "-c:v libx264 -preset slow -crf 16";
             this.vidCustomArgs.Size = new System.Drawing.Size(220, 22);
             this.vidCustomArgs.TabIndex = 24;
             //
@@ -1534,6 +1537,18 @@
             this.vidCustomArgsLabel.Size = new System.Drawing.Size(120, 16);
             this.vidCustomArgsLabel.TabIndex = 25;
             this.vidCustomArgsLabel.Text = "MP4: Custom Args";
+            //
+            // vidCustomArgsHelp
+            //
+            this.vidCustomArgsHelp.Anchor = System.Windows.Forms.AnchorStyles.Left;
+            this.vidCustomArgsHelp.Image = global::Cupscale.Properties.Resources.questmark;
+            this.vidCustomArgsHelp.Location = new System.Drawing.Point(128, 136);
+            this.vidCustomArgsHelp.Name = "vidCustomArgsHelp";
+            this.vidCustomArgsHelp.Size = new System.Drawing.Size(22, 22);
+            this.vidCustomArgsHelp.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            this.vidCustomArgsHelp.TabIndex = 26;
+            this.vidCustomArgsHelp.TabStop = false;
+            this.toolTip.SetToolTip(this.vidCustomArgsHelp, "Used when Encoder is Custom: ffmpeg output options for the video stream,\r\ninserted after the input and before the output file.\r\n\r\nExample (H.264, CPU, high quality):\r\n-c:v libx264 -preset slow -crf 16\r\n\r\nExample (H.265, NVENC, 10-bit):\r\n-c:v hevc_nvenc -preset p7 -rc vbr -cq 20 -b:v 0 -pix_fmt p010le\r\n\r\nThese override Cupscale's defaults (-pix_fmt yuv420p).");
 
             // 
             // label40
@@ -1953,6 +1968,7 @@
         private System.Windows.Forms.ComboBox vidEncoder;
         private System.Windows.Forms.TextBox vidCustomArgs;
         private System.Windows.Forms.Label vidCustomArgsLabel;
+        private System.Windows.Forms.PictureBox vidCustomArgsHelp;
         private System.Windows.Forms.Label label40;
         private System.Windows.Forms.Label label41;
         private System.Windows.Forms.Label label42;
