@@ -104,6 +104,40 @@ def test_builds_compact_models(tmp_path, wrappers):
     assert (in_nc, out_nc, nf, nb, scale) == (3, 3, 4, 1, 1)
 
 
+def test_spandrel_fallback_runs_other_archs(tmp_path):
+    """Non-ESRGAN archs (here RealPLKSR) load through spandrel; fp16 is skipped where unsupported."""
+    pytest.importorskip("spandrel")
+    from spandrel.architectures.PLKSR import RealPLKSR
+
+    path = tmp_path / "plksr.pth"
+    torch.save({"params": RealPLKSR(dim=16, n_blocks=2, upscaling_factor=2).state_dict()}, path)
+    up = make_upscaler(tmp_path, fp16=True)
+
+    model, in_nc, out_nc, _, _, scale = up._Upscale__build_model(str(path))
+    up.model, up.last_in_nc, up.last_out_nc, up.last_scale = model, in_nc, out_nc, scale
+    up.fp16 = False  # CPU run; the model itself decides its precision
+
+    assert (in_nc, out_nc, scale) == (3, 3, 2)
+    assert next(model.parameters()).dtype == torch.float32
+    assert up.upscale(np.full((5, 7, 3), 90, np.uint8)).shape == (10, 14, 3)
+
+
+def test_esrgan_detection():
+    from upscale import is_esrgan
+
+    assert is_esrgan({"model.1.sub.0.RDB1.conv1.0.weight": 0})
+    assert is_esrgan({"params": {"body.0.rdb1.conv1.weight": 0}})
+    assert not is_esrgan({"params": {"feats.0.weight": 0}})
+
+
+def test_load_state_dict_reads_safetensors(tmp_path):
+    safetensors = pytest.importorskip("safetensors.torch")
+    path = tmp_path / "m.safetensors"
+    safetensors.save_file({"w": torch.arange(4.0)}, str(path))
+
+    assert torch.equal(ops.load_state_dict(str(path))["w"], torch.arange(4.0))
+
+
 def test_unwrap_params_prefers_ema():
     from utils.architecture.block import unwrap_params
 

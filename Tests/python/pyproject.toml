@@ -6,11 +6,16 @@ dependencies = [
     "numpy",
     "opencv-python-headless",
     "torch",
+    "torchvision",
+    "spandrel",
+    "spandrel_extra_arches",
+    "safetensors",
     "pytest",
 ]
 
 [tool.uv.sources]
 torch = { index = "pytorch-cpu" }
+torchvision = { index = "pytorch-cpu" }
 
 [[tool.uv.index]]
 name = "pytorch-cpu"

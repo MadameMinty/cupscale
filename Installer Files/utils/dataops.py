@@ -40,7 +40,10 @@ def interpolate_state_dicts(a: dict, b: dict, weight_a: float, weight_b: float) 
 
 
 def load_state_dict(path: str):
-    """torch.load to CPU without executing pickled code; falls back for legacy checkpoints."""
+    """torch.load to CPU without executing pickled code; falls back for legacy checkpoints. Also reads .safetensors."""
+    if str(path).lower().endswith(".safetensors"):
+        from safetensors.torch import load_file
+        return load_file(str(path), device="cpu")
     try:
         return torch.load(path, map_location="cpu", weights_only=True)
     except TypeError:  # torch < 1.13 has no weights_only

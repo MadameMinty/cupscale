@@ -21,6 +21,51 @@ from utils.architecture.SRVGG import SRVGGNetCompact as RealESRGANv2
 
 inference_mode = getattr(torch, "inference_mode", torch.no_grad)  # torch < 1.9 fallback
 
+ESRGAN_KEYS = ("model.1.sub.0.RDB1.conv1.0.weight", "RRDB_trunk.0.RDB1.conv1.weight", "body.0.rdb1.conv1.weight")
+
+
+def is_esrgan(state_dict: dict) -> bool:
+    for key in ("params_ema", "params"):
+        if key in state_dict and isinstance(state_dict[key], dict):
+            state_dict = state_dict[key]
+            break
+    return any(k in state_dict for k in ESRGAN_KEYS)
+
+
+class SpandrelModel(torch.nn.Module):
+    """spandrel model (RealPLKSR, OmniSR, SRFormer, SPAN, DAT, HAT...) with the plain nn.Module call used here.
+    Pads to the model's size requirements and stays in fp32 if it doesn't support fp16."""
+
+    def __init__(self, descriptor):
+        super().__init__()
+        self.descriptor = descriptor
+        self.net = descriptor.model  # Registered, so .to()/.eval() reach it
+
+    def half(self):
+        return super().half() if self.descriptor.supports_half else self
+
+    def forward(self, x):
+        return self.descriptor(x.to(next(self.net.parameters()).dtype))
+
+
+def load_spandrel(state_dict: dict):
+    import warnings
+
+    warnings.filterwarnings("ignore", message=r".*torch\.jit\.script.*", category=FutureWarning)  # Harmless on Python 3.14
+    import spandrel
+
+    try:
+        import spandrel_extra_arches  # Restrictive-license archs, e.g. SRFormer
+
+        spandrel_extra_arches.install(ignore_duplicates=True)
+    except ImportError:
+        pass
+
+    descriptor = spandrel.ModelLoader().load_from_state_dict(state_dict)
+    if not isinstance(descriptor, spandrel.ImageModelDescriptor):
+        raise ValueError(f"{descriptor.architecture.name} models are not supported (not image-to-image)")
+    return SpandrelModel(descriptor)
+
 
 class SeamlessOptions(str, Enum):
     TILE = "tile"
@@ -341,9 +386,18 @@ class Upscale:
             model = SPSR(state_dict)
             info = (model.in_nc, model.out_nc, model.num_filters, model.num_blocks, model.scale)
         # Regular ESRGAN, "new-arch" ESRGAN, Real-ESRGAN v1
-        else:
+        elif is_esrgan(state_dict):
             model = ESRGAN(state_dict)
             info = (model.in_nc, model.out_nc, model.num_filters, model.num_blocks, model.scale)
+        # Anything else spandrel knows
+        else:
+            try:
+                model = load_spandrel(state_dict)
+            except ImportError:
+                self.log.error("This model needs spandrel, which is missing from the Python environment.")
+                sys.exit(1)
+            d = model.descriptor
+            info = (d.input_channels, d.output_channels, 0, 0, d.scale)
 
         del state_dict
         model.eval()
