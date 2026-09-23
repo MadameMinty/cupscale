@@ -1,4 +1,4 @@
-﻿using Cupscale.Cupscale;
+using Cupscale.Cupscale;
 using Cupscale.IO;
 using Cupscale.UI;
 using System;
@@ -14,83 +14,70 @@ namespace Cupscale.Main
 {
     class PostProcessing
     {
-        public static async Task PostprocessingSingle(string path, bool dontResize = false, int retryCount = 20, bool trimPngExt = true)
+        /// <summary> Post-processes an AI output file. Returns the resulting file path, or null on failure. Pass format when calling off the UI thread. </summary>
+        public static async Task<string> PostprocessingSingle(string path, bool dontResize = false, int retryCount = 20, bool trimPngExt = true, string format = null)
         {
             if (!IoUtils.IsFileValid(path))
-                return;
+                return null;
 
-            string newPath = "";
+            format = format ?? PreviewUi.outputFormat.Text;
 
             if (trimPngExt)
-                newPath = path.Substring(0, path.Length - 4);
-
-            Logger.Log($"PostProc: Trimmed filename from '{Path.GetFileName(path)}' to '{Path.GetFileName(newPath)}'");
-
-            try
             {
-                File.Move(path, newPath);
-            }
-            catch (Exception e)     // An I/O error can appear if the file is still locked by python (?)
-            {
-                Logger.Log($"Failed to move/rename! ('{path}' => '{newPath}') {e.Message}\n{e.StackTrace}");
+                string newPath = path.Substring(0, path.Length - 4);
+                Logger.Log($"PostProc: Trimmed filename from '{Path.GetFileName(path)}' to '{Path.GetFileName(newPath)}'");
 
-                if (retryCount > 0)
+                for (int attempt = 0; ; attempt++)
                 {
-                    await Task.Delay(500);      // Wait and retry up to 20 times
-                    int newRetryCount = retryCount - 1;
-                    Logger.Log("Retrying - " + newRetryCount + " attempts left.");
-                    await PostprocessingSingle(path, dontResize, newRetryCount);
-                }
-                else
-                {
-                    Logger.ErrorMessage($"Failed to move/rename '{Path.GetFileName(path)}' and ran out of retries!", e);
+                    try
+                    {
+                        File.Move(path, newPath);
+                        break;
+                    }
+                    catch (Exception e)     // An I/O error can appear if the file is still locked by python (?)
+                    {
+                        Logger.Log($"Failed to move/rename! ('{path}' => '{newPath}') {e.Message}");
+
+                        if (attempt >= retryCount)
+                        {
+                            Logger.ErrorMessage($"Failed to move/rename '{Path.GetFileName(path)}' and ran out of retries!", e);
+                            return null;
+                        }
+
+                        await Task.Delay(500);
+                    }
                 }
 
-                return;
+                path = newPath;
             }
-
-            path = newPath;
-            string format = PreviewUi.outputFormat.Text;
 
             if (Program.lastUpscaleIsVideo)     // Temp frames for ffmpeg: re-encode only if resizing
             {
                 bool resize = !dontResize && !(ImageProcessing.postScaleMode == Upscale.ScaleMode.Percent && ImageProcessing.postScaleValue == 100);
 
                 if (resize || !path.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
-                    await ImageProcessing.PostProcessImage(path, ImageProcessing.Format.PngFast, dontResize);
-                else if (Upscale.currentMode == Upscale.UpscaleMode.Batch)
-                    PostProcessingQueue.lastOutfile = path;
+                    return await ImageProcessing.PostProcessImage(path, ImageProcessing.Format.PngFast, dontResize);
 
-                return;
-            }
-
-            if (format == Upscale.ImgExportMode.PNG.ToStringTitleCase())
-            {
-                await ImageProcessing.PostProcessImage(path, ImageProcessing.Format.Png50, dontResize);
-                return;
+                return path;
             }
 
             if (format == Upscale.ImgExportMode.SameAsSource.ToStringTitleCase())
-                await ImageProcessing.ConvertImageToOriginalFormat(path, true, false, dontResize);
-
-            if (format == Upscale.ImgExportMode.JPEG.ToStringTitleCase())
-                await ImageProcessing.PostProcessImage(path, ImageProcessing.Format.Jpeg, dontResize);
-
-            if (format == Upscale.ImgExportMode.WEBP.ToStringTitleCase())
-                await ImageProcessing.PostProcessImage(path, ImageProcessing.Format.Weppy, dontResize);
-
-            if (format == Upscale.ImgExportMode.BMP.ToStringTitleCase())
-                await ImageProcessing.PostProcessImage(path, ImageProcessing.Format.BMP, dontResize);
-
-            if (format == Upscale.ImgExportMode.TGA.ToStringTitleCase())
-                await ImageProcessing.PostProcessImage(path, ImageProcessing.Format.TGA, dontResize);
+                return await ImageProcessing.ConvertImageToOriginalFormat(path, true, dontResize);
 
             if (format == Upscale.ImgExportMode.DDS.ToStringTitleCase())
-                await ImageProcessing.PostProcessDDS(path);
+                return await ImageProcessing.PostProcessDDS(path);
 
-            if (format == Upscale.ImgExportMode.GIF.ToStringTitleCase())
-                await ImageProcessing.PostProcessImage(path, ImageProcessing.Format.GIF, dontResize);
+            return await ImageProcessing.PostProcessImage(path, GetFormat(format), dontResize);
+        }
 
+        static ImageProcessing.Format GetFormat(string format)
+        {
+            if (format == Upscale.ImgExportMode.JPEG.ToStringTitleCase()) return ImageProcessing.Format.Jpeg;
+            if (format == Upscale.ImgExportMode.WEBP.ToStringTitleCase()) return ImageProcessing.Format.Weppy;
+            if (format == Upscale.ImgExportMode.BMP.ToStringTitleCase()) return ImageProcessing.Format.BMP;
+            if (format == Upscale.ImgExportMode.TGA.ToStringTitleCase()) return ImageProcessing.Format.TGA;
+            if (format == Upscale.ImgExportMode.GIF.ToStringTitleCase()) return ImageProcessing.Format.GIF;
+            return ImageProcessing.Format.Png50;
         }
     }
 }

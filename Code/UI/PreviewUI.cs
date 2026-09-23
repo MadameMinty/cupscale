@@ -88,8 +88,8 @@ namespace Cupscale.UI
                 outImg = Upscale.GetOutputImg();
                 Program.mainForm.SetProgress(100f, "Post-Processing...");
                 await Task.Delay(50);
-                await PostProcessing.PostprocessingSingle(outImg, false);
-                string outFilename = Upscale.FilenamePostprocess(lastOutfile);
+                string processed = await PostProcessing.PostprocessingSingle(outImg, false);
+                string outFilename = Upscale.FilenamePostprocess(processed);
                 await Upscale.CopyImagesTo(Path.GetDirectoryName(Program.lastImgPath));
             }
             catch (Exception e)

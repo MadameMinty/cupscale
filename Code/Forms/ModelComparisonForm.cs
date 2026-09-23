@@ -171,9 +171,9 @@ namespace Cupscale.Forms
                 if (fullImage) inpath = Paths.tempImgPath.GetParentDir();
                 await Upscale.Run(inpath, Paths.compositionOut, mdl, false, Config.GetBool("alpha"), PreviewUi.PreviewMode.None);
                 outImg = Directory.GetFiles(Paths.compositionOut, "*.png", SearchOption.AllDirectories)[0];
-                await PostProcessing.PostprocessingSingle(outImg, false, 10, false);
-                await ProcessImage(PreviewUi.lastOutfile, mdl.model1Name);
-                IoUtils.TryCopy(PreviewUi.lastOutfile, Path.Combine(Paths.imgOutPath, $"{index}-{mdl.model1Name}.png"), true);
+                string processed = await PostProcessing.PostprocessingSingle(outImg, false, 10, false);
+                await ProcessImage(processed, mdl.model1Name);
+                IoUtils.TryCopy(processed, Path.Combine(Paths.imgOutPath, $"{index}-{mdl.model1Name}.png"), true);
             }
             catch (Exception e)
             {

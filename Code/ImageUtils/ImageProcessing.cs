@@ -26,7 +26,8 @@ namespace Cupscale
         public static int preScaleValue = 100;
         public static bool preOnlyDownscale = true;
 
-        public static async Task ConvertImageToOriginalFormat(string path, bool postprocess, bool batchProcessing, bool setProgress = true)
+        /// <summary> Returns the output path. </summary>
+        public static async Task<string> ConvertImageToOriginalFormat(string path, bool postprocess, bool dontResize)
         {
             FileInfo file = new FileInfo(path);
 
@@ -45,22 +46,19 @@ namespace Cupscale
                 format = Format.TGA;
 
             if (GetTrimmedExtension(file) == "dds")
-            {
-                await PostProcessDDS(path);
-                return;
-            }
+                return await PostProcessDDS(path);
 
             if (GetTrimmedExtension(file) == "gif")
                 format = Format.GIF;
 
             string ext = Path.GetExtension(path).ToUpper().Replace(".", "");
             if (format == Format.Png50 && ext != "PNG")
-                Program.ShowMessage("Cupscale does not support the image format " + ext + " for exporting, so PNG is used.");
+                Logger.Log("Cupscale does not support the image format " + ext + " for exporting, so PNG is used.");
 
             if (postprocess)
-                await PostProcessImage(file.FullName, format, batchProcessing);
+                return await PostProcessImage(file.FullName, format, dontResize);
             else
-                await ConvertImage(file.FullName, format, false, ExtMode.UseNew, true);
+                return await ConvertImage(file.FullName, format, false, ExtMode.UseNew, true);
         }
 
         private static string GetTrimmedExtension(FileInfo file)
@@ -113,7 +111,7 @@ namespace Cupscale
         }
 
         public enum ExtMode { UseNew, KeepOld, AppendNew }
-        public static async Task ConvertImage(string path, Format format, bool fillAlpha, ExtMode extMode, bool deleteSource = true, string overrideOutPath = "", bool allowTgaFlip = false)
+        public static async Task<string> ConvertImage(string path, Format format, bool fillAlpha, ExtMode extMode, bool deleteSource = true, string overrideOutPath = "", bool allowTgaFlip = false)
         {
             MagickImage img = ImgUtils.GetMagickImage(path, allowTgaFlip);
             string newExt = "png";
@@ -222,6 +220,7 @@ namespace Cupscale
             img.Dispose();
             IoUtils.RemoveReadonlyFlag(outPath);
             await Task.Delay(1);
+            return outPath;
         }
 
         static string GetOutPath (string path, string newExt, ExtMode extMode, string overrideOutPath)
@@ -255,7 +254,8 @@ namespace Cupscale
             return img;
         }
 
-        public static async Task PostProcessImage(string path, Format format, bool dontResize)
+        /// <summary> Returns the output path. </summary>
+        public static async Task<string> PostProcessImage(string path, Format format, bool dontResize)
         {
             Logger.Log($"[ImgProc] Post-Processing {Path.GetFileName(path)} to {format}, resize: {!dontResize}");
             MagickImage img = ImgUtils.GetMagickImage(path);
@@ -333,11 +333,7 @@ namespace Cupscale
                 newExt = "gif";
             }
 
-            await Task.Delay(1);
             string outPath = GetOutPath(path, newExt, ExtMode.UseNew, "");
-
-            if (Upscale.currentMode == Upscale.UpscaleMode.Batch)
-                PostProcessingQueue.lastOutfile = outPath;
 
             if (Upscale.currentMode == Upscale.UpscaleMode.Single || Upscale.currentMode == Upscale.UpscaleMode.Composition)
                 PreviewUi.lastOutfile = outPath;
@@ -348,14 +344,19 @@ namespace Cupscale
                 Logger.Log("[ImgProc] Written image to " + outPath);
             }
 
+            img.Dispose();
+
             if (outPath.ToLower() != path.ToLower())
             {
                 if (Logger.doLogIo) Logger.Log("[ImgProc] Deleting source file: " + path);
                 File.Delete(path);
             }
+
+            return outPath;
         }
 
-        public static async Task PostProcessDDS(string path)
+        /// <summary> Returns the output path. </summary>
+        public static async Task<string> PostProcessDDS(string path)
         {
             Logger.Log("[ImgProc] PostProcessDDS: Loading MagickImage from " + path);
             MagickImage img = ImgUtils.GetMagickImage(path);
@@ -372,9 +373,6 @@ namespace Cupscale
             await NvCompress.PngToDds(pngPath, outPath);
             IoUtils.TryDeleteIfExists(pngPath);
 
-            if (Upscale.currentMode == Upscale.UpscaleMode.Batch)
-                PostProcessingQueue.lastOutfile = outPath;
-
             if (Upscale.currentMode == Upscale.UpscaleMode.Single || Upscale.currentMode == Upscale.UpscaleMode.Composition)
                 PreviewUi.lastOutfile = outPath;
 
@@ -383,6 +381,8 @@ namespace Cupscale
                 if (Logger.doLogIo) Logger.Log("[ImgProc] Deleting source file: " + path);
                 File.Delete(path);
             }
+
+            return outPath;
         }
 
         public static MagickImage ResizeImagePre(MagickImage img)

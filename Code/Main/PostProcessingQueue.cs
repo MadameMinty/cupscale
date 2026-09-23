@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Cupscale.Cupscale
@@ -51,7 +52,7 @@ namespace Cupscale.Cupscale
 
                 foreach (string file in outFiles)
                 {
-                    if (!outputFileQueue.Contains(file) && !processedFiles.Contains(file) && !outputFiles.Contains(file) && !IoUtils.IsFileLocked(file))
+                    if (!outputFileQueue.Contains(file) && !processedFiles.Contains(file) && !IoUtils.IsFileLocked(file))
                     {
                         //processedFiles.Add(file);
                         outputFileQueue.Enqueue(file);
@@ -65,94 +66,119 @@ namespace Cupscale.Cupscale
 
         static bool AnyFilesLeft ()
         {
-            if (IoUtils.GetAmountOfFiles(Paths.imgOutPath, true) > 0)
+            if (outputFileQueue.Count > 0 || activeWorkers > 0)
                 return true;
 
-            return false;
+            try
+            {
+                if (Directory.GetFiles(Paths.imgOutPath, "*.tmp", SearchOption.AllDirectories).Any(f => !processedFiles.Contains(f)))
+                    return true;
+
+                return Directory.GetFiles(Paths.imgOutPath, "*.*.png", SearchOption.AllDirectories)
+                    .Any(f => GetTmpPath(f, Paths.imgOutPath, Paths.imgInPath, File.Exists) != null);
+            }
+            catch
+            {
+                return false;
+            }
         }
 
-        public static string lastOutfile;
-        
+        static int activeWorkers;
+
         public static async Task ProcessQueue ()
         {
-            Stopwatch sw = new Stopwatch();
+            string format = PreviewUi.outputFormat.Text;    // Read UI state once, on the UI thread
+            int maxWorkers = Math.Max(1, Math.Min(4, Environment.ProcessorCount / 2));
+            List<Task> workers = new List<Task>();
 
             while (!Program.canceled && (run || AnyFilesLeft()))
             {
-                if (outputFileQueue.Count > 0)
+                workers.RemoveAll(t => t.IsCompleted);
+
+                while (outputFileQueue.Count > 0 && workers.Count < maxWorkers)
                 {
                     string file = outputFileQueue.Dequeue();
                     processedFiles.Add(file);
-                    Logger.Log("[Queue] Post-Processing " + Path.GetFileName(file));
-                    sw.Restart();
-                    lastOutfile = null;
-                    await PostProcessing.PostprocessingSingle(file, false);
-
-                    for (int retries = 20; retries > 0 && IoUtils.IsFileLocked(lastOutfile); retries--)
+                    Interlocked.Increment(ref activeWorkers);
+                    workers.Add(Task.Run(async () =>
                     {
-                        Logger.Log($"{lastOutfile} appears to be locked - waiting 500ms...");
-                        await Task.Delay(500);
-                    }
-
-                    string outFilename = IoUtils.IsFileValid(lastOutfile) ? Upscale.FilenamePostprocess(lastOutfile) : null;
-
-                    if (outFilename == null)
-                    {
-                        Logger.Log($"[Queue] Error: Post-processing {Path.GetFileName(file)} failed, skipping.");
-                        IoUtils.TryDeleteIfExists(file);
-                        IoUtils.TryDeleteIfExists(lastOutfile);
-                        BatchUpscaleUI.upscaledImages++;
-                        continue;
-                    }
-
-                    outputFiles.Add(outFilename);
-                    Logger.Log("[Queue] Done Post-Processing " + Path.GetFileName(file) + " in " + sw.ElapsedMilliseconds + "ms");
-
-                    try
-                    {
-                        if (Upscale.overwriteMode == Upscale.Overwrite.Yes)
-                        {
-                            string suffixToRemove = "-" + Program.lastModelName.Replace(":", ".").Replace(">>", "+");
-
-                            if (copyMode == CopyMode.KeepStructure)
-                            {
-                                string combinedPath = currentOutPath + outFilename.Replace(Paths.imgOutPath, "");
-                                Directory.CreateDirectory(combinedPath.GetParentDir());
-                                File.Copy(outFilename, combinedPath.ReplaceInFilename(suffixToRemove, "", true), true);
-                            }
-                            if (copyMode == CopyMode.CopyToRoot)
-                            {
-                                File.Copy(outFilename, Path.Combine(currentOutPath, Path.GetFileName(outFilename).Replace(suffixToRemove, "")), true);
-                            }
-
-                            File.Delete(outFilename);
-                        }
-                        else
-                        {
-                            if (copyMode == CopyMode.KeepStructure)
-                            {
-                                string combinedPath = currentOutPath + outFilename.Replace(Paths.imgOutPath, "");
-                                Directory.CreateDirectory(combinedPath.GetParentDir());
-                                File.Copy(outFilename, combinedPath, true);
-                            }
-
-                            if (copyMode == CopyMode.CopyToRoot)
-                            {
-                                File.Copy(outFilename, Path.Combine(currentOutPath, Path.GetFileName(outFilename)), true);
-                            }
-
-                            File.Delete(outFilename);
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        Logger.Log("Error trying to copy post-processed file back: " + e.Message + "\n" + e.StackTrace);
-                    }
-                    
-                    BatchUpscaleUI.upscaledImages++;
+                        try { await ProcessFile(file, format); }
+                        finally { Interlocked.Decrement(ref activeWorkers); }
+                    }));
                 }
 
-                await Task.Delay(200);
+                await Task.Delay(100);
+            }
+
+            await Task.WhenAll(workers);
+        }
+
+        static async Task ProcessFile (string file, string format)
+        {
+            Logger.Log("[Queue] Post-Processing " + Path.GetFileName(file));
+            Stopwatch sw = Stopwatch.StartNew();
+
+            try
+            {
+                string processed = await PostProcessing.PostprocessingSingle(file, false, 20, true, format);
+
+                for (int retries = 20; retries > 0 && IoUtils.IsFileLocked(processed); retries--)
+                {
+                    Logger.Log($"{processed} appears to be locked - waiting 500ms...");
+                    await Task.Delay(500);
+                }
+
+                string outFilename = IoUtils.IsFileValid(processed) ? Upscale.FilenamePostprocess(processed) : null;
+
+                if (outFilename == null)
+                {
+                    Logger.Log($"[Queue] Error: Post-processing {Path.GetFileName(file)} failed, skipping.");
+                    IoUtils.TryDeleteIfExists(file);
+                    IoUtils.TryDeleteIfExists(processed);
+                    return;
+                }
+
+                lock (outputFiles)
+                    outputFiles.Add(outFilename);
+
+                Logger.Log("[Queue] Done Post-Processing " + Path.GetFileName(file) + " in " + sw.ElapsedMilliseconds + "ms");
+                MoveToOutput(outFilename);
+            }
+            catch (Exception e)
+            {
+                Logger.Log($"[Queue] Error post-processing {Path.GetFileName(file)}: {e.Message}\n{e.StackTrace}");
+                IoUtils.TryDeleteIfExists(file);
+            }
+            finally
+            {
+                Interlocked.Increment(ref BatchUpscaleUI.upscaledImages);
+            }
+        }
+
+        static void MoveToOutput (string outFilename)
+        {
+            try
+            {
+                string targetPath;
+
+                if (copyMode == CopyMode.KeepStructure)
+                    targetPath = currentOutPath + outFilename.Replace(Paths.imgOutPath, "");
+                else
+                    targetPath = Path.Combine(currentOutPath, Path.GetFileName(outFilename));
+
+                if (Upscale.overwriteMode == Upscale.Overwrite.Yes)
+                {
+                    string suffixToRemove = "-" + Upscale.GetLastModelName();
+                    targetPath = Path.Combine(Path.GetDirectoryName(targetPath), Path.GetFileNameWithoutExtension(targetPath).Replace(suffixToRemove, "") + Path.GetExtension(targetPath));
+                }
+
+                Directory.CreateDirectory(Path.GetDirectoryName(targetPath));
+                IoUtils.DeleteIfExists(targetPath);
+                File.Move(outFilename, targetPath);
+            }
+            catch (Exception e)
+            {
+                Logger.Log("Error trying to copy post-processed file back: " + e.Message + "\n" + e.StackTrace);
             }
         }
 

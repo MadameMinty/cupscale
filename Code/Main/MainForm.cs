@@ -613,8 +613,8 @@ namespace Cupscale.Main
 			string ext = Path.GetExtension(Program.lastImgPath);
 			string outPath = Path.ChangeExtension(Program.lastImgPath, null) + "[temp]" + ext + ".png";
 			previewImg.Image.Save(outPath);
-			await PostProcessing.PostprocessingSingle(outPath, true);
-			string outFilename = Upscale.FilenamePostprocess(PreviewUi.lastOutfile);
+			string processed = await PostProcessing.PostprocessingSingle(outPath, true);
+			string outFilename = Upscale.FilenamePostprocess(processed);
 			string finalPath = IoUtils.ReplaceInFilename(outFilename, "[temp]", "");
 			loadingForm.Close();
 			Program.ShowMessage("Saved to " + finalPath + ".", "Message");
