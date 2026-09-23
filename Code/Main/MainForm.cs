@@ -629,6 +629,7 @@ namespace Cupscale.Main
 			DialogForm loadingForm = new DialogForm("Post-Processing And Saving...");
 			await Task.Delay(50);
 			Upscale.currentMode = Upscale.UpscaleMode.Single;
+			Program.lastUpscaleIsVideo = false;		// May be stale from a previous video run
 			string ext = Path.GetExtension(Program.lastImgPath);
 			string outPath = Path.ChangeExtension(Program.lastImgPath, null) + "[temp]" + ext + ".png";
 			previewImg.Image.Save(outPath);
