@@ -18,12 +18,12 @@ namespace Cupscale
     {
         public enum Format { Source, Png50, PngFast, PngRaw, Jpeg, Weppy, BMP, TGA, DDS, GIF }
 
-        public static Filters.Filter postFilter = Filters.resizeFilters[0];
+        public static Filters.Filter postFilter = Filters.lanczos;
         public static Upscale.ScaleMode postScaleMode = Upscale.ScaleMode.Percent;
         public static int postScaleValue = 100;
         public static bool postOnlyDownscale = true;
 
-        public static Filters.Filter preFilter = Filters.resizeFilters[0];
+        public static Filters.Filter preFilter = Filters.lanczos;
         public static Upscale.ScaleMode preScaleMode = Upscale.ScaleMode.Percent;
         public static int preScaleValue = 100;
         public static bool preOnlyDownscale = true;

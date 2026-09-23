@@ -61,8 +61,8 @@ namespace Cupscale.Main
 			UiHelpers.InitCombox(preResizeMode, 0);
 			UiHelpers.InitCombox(postResizeScale, 1);
 			UiHelpers.InitCombox(postResizeMode, 0);
-			UiHelpers.FillComboBoxWithList(preResizeFilter, Filters.resizeFilters.Select(x => x.Alias).ToList(), 0);
-			UiHelpers.FillComboBoxWithList(postResizeFilter, Filters.resizeFilters.Select(x => x.Alias).ToList(), 0);
+			UiHelpers.FillComboBoxWithList(preResizeFilter, Filters.resizeFilters.Select(x => x.Alias).ToList(), Filters.resizeFilters.IndexOf(Filters.lanczos));
+			UiHelpers.FillComboBoxWithList(postResizeFilter, Filters.resizeFilters.Select(x => x.Alias).ToList(), Filters.resizeFilters.IndexOf(Filters.lanczos));
 			// Batch Upscale
 			UiHelpers.InitCombox(batchOutMode, 0);
 			UiHelpers.InitCombox(preprocessMode, 0);
