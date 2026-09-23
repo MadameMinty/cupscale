@@ -20,7 +20,7 @@ namespace Cupscale
             if (hdr) hdrStr = FFmpegStrings.hdrFilter;
             string deDupeStr = "";
             if (deDupe) deDupeStr = "-vf mpdecimate";
-            string args = $"-i {inputFile.Wrap()} -compression_level 1 {hdrStr} -vsync 0 {deDupeStr} \"" + frameFolderPath + "/%08d.png\"";
+            string args = $"-i {inputFile.Wrap()} -compression_level 1 {hdrStr} -fps_mode passthrough {deDupeStr} \"" + frameFolderPath + "/%08d.png\"";
             await FFmpeg.Run(args);
             await Task.Delay(1);
             if (delSrc)
