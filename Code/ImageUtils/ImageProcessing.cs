@@ -1,5 +1,7 @@
+using System;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Cupscale.Cupscale;
 using Cupscale.ImageUtils;
@@ -70,44 +72,57 @@ namespace Cupscale
         {
             DirectoryInfo d = new DirectoryInfo(path);
             FileInfo[] files = d.GetFiles("*", SearchOption.AllDirectories);
-            int i = 1;
-            foreach (FileInfo file in files)
+            int done = 0;
+            IProgress<string> progress = new Progress<string>(name => Program.mainForm.SetProgress(Program.GetPercentage(done, files.Length), "Converting " + name));
+            var options = new ParallelOptions { MaxDegreeOfParallelism = Math.Max(1, Environment.ProcessorCount / 2) };
+
+            await Task.Run(() => Parallel.ForEach(files, options, file =>
             {
-                Program.mainForm.SetProgress(Program.GetPercentage(i, files.Length), "Converting " + file.Name);
-                await PreProcessImage(file.FullName, fillAlpha);
-                i++;
-            }
+                PreProcessImage(file.FullName, fillAlpha).GetAwaiter().GetResult();
+                Interlocked.Increment(ref done);
+                progress.Report(file.Name);
+            }));
+
             Logger.Log("[ImgProc] Done pre-processing images");
         }
 
-        public static async Task PreProcessImage(string path, bool fillAlpha)
+        public static Task PreProcessImage(string path, bool fillAlpha)
         {
             MagickImage img = ImgUtils.GetMagickImage(path, true);
-            img.Quality = 10;
 
             Logger.Log("[ImgProc] Preprocessing " + path + " - Fill Alpha: " + fillAlpha);
 
             img = CheckColorDepth(path, img);
 
             if (fillAlpha)
-                img = ImgUtils.FillAlphaWithBgColor(img);
+            {
+                MagickImage filled = ImgUtils.FillAlphaWithBgColor(img);
+                img.Dispose();
+                img = filled;
+            }
 
             img = ResizeImagePre(img);
 
             string outPath = path + ".png";
-            await Task.Delay(1);
-            img.Format = MagickFormat.Png32;
 
-            if (outPath.ToLower() == path.ToLower())    // Force overwrite by deleting source file before writing new file - THIS IS IMPORTANT
-                File.Delete(path);
+            using (img)
+            {
+                img.Format = MagickFormat.Png32;
+                img.Quality = 10;   // Temp file for the AI: fastest zlib level
 
-            img.Write(outPath);
+                if (outPath.ToLower() == path.ToLower())    // Force overwrite by deleting source file before writing new file - THIS IS IMPORTANT
+                    File.Delete(path);
+
+                img.Write(outPath);
+            }
 
             if (outPath.ToLower() != path.ToLower())
             {
                 if (Logger.doLogIo) Logger.Log("[ImgProc] Deleting source file: " + path);
                 File.Delete(path);
             }
+
+            return Task.CompletedTask;
         }
 
         public enum ExtMode { UseNew, KeepOld, AppendNew }
