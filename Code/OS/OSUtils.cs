@@ -12,30 +12,15 @@ namespace Cupscale.OS
     {
         public static bool IsUserAdministrator()
         {
-            //bool value to hold our return value
-            bool isAdmin;
-            WindowsIdentity user = null;
             try
             {
-                //get the currently logged in user
-                user = WindowsIdentity.GetCurrent();
-                WindowsPrincipal principal = new WindowsPrincipal(user);
-                isAdmin = principal.IsInRole(WindowsBuiltInRole.Administrator);
+                using (WindowsIdentity user = WindowsIdentity.GetCurrent())
+                    return new WindowsPrincipal(user).IsInRole(WindowsBuiltInRole.Administrator);
             }
-            catch (UnauthorizedAccessException ex)
+            catch
             {
-                isAdmin = false;
+                return false;
             }
-            catch (Exception ex)
-            {
-                isAdmin = false;
-            }
-            finally
-            {
-                if (user != null)
-                    user.Dispose();
-            }
-            return isAdmin;
         }
 
         //public enum ProcessMode { Visible }

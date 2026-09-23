@@ -20,7 +20,7 @@ namespace Cupscale.Forms
             mainLabel.Text = message;
             Show();
             //TopMost = true;
-            SelfDestruct(selfDestructTime);
+            _ = SelfDestruct(selfDestructTime);
         }
 
         public void ChangeText (string s)

@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Reflection.Emit;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -27,6 +28,28 @@ namespace Cupscale
         {
             string d = dir.ToLowerInvariant().Replace('/', '\\') + "\\";
             return Regex.IsMatch(d, @"\\temp\\(temp\d+_[^\\]*\.zip|rar\$[^\\]*|7z[a-z0-9]+)\\");
+        }
+
+        /// <summary> Downloads url to path, reporting (bytes done, total or -1). No timeout: runtimes are large. </summary>
+        public static async Task DownloadFileAsync(string url, string path, Action<long, long> progress = null)
+        {
+            using var client = new HttpClient { Timeout = System.Threading.Timeout.InfiniteTimeSpan };
+            using HttpResponseMessage response = await client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
+            response.EnsureSuccessStatusCode();
+            long total = response.Content.Headers.ContentLength ?? -1;
+
+            using Stream src = await response.Content.ReadAsStreamAsync();
+            using FileStream dst = File.Create(path);
+            byte[] buffer = new byte[1 << 16];
+            long done = 0;
+            int read;
+
+            while ((read = await src.ReadAsync(buffer)) > 0)
+            {
+                await dst.WriteAsync(buffer.AsMemory(0, read));
+                done += read;
+                progress?.Invoke(done, total);
+            }
         }
 
         public static bool IsPortable ()

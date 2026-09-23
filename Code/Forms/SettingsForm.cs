@@ -18,8 +18,6 @@ namespace Cupscale.Forms
     public partial class SettingsForm : Form
     {
 
-        bool initialized = false;
-
         public SettingsForm()
         {
             InitializeComponent();
@@ -32,7 +30,6 @@ namespace Cupscale.Forms
                 //Program.mainForm.Enabled = false;
             Logger.textbox = logTbox;
             LoadSettings();
-            initialized = true;
         }
 
         void LoadSettings()

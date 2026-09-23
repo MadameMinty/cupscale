@@ -13,15 +13,14 @@ namespace CupscaleTests
     public class ProcessAndImageTests
     {
         [Fact]
-        public void RunAndGetOutput_DoesNotDeadlockOnLargeStderr()
+        public async Task RunAndGetOutput_DoesNotDeadlockOnLargeStderr()
         {
             Process proc = OsUtils.NewProcess(true);
             proc.StartInfo.Arguments = "/C for /L %i in (1,1,6000) do @echo stderr line %i 1>&2";
 
-            var run = Task.Run(() => OsUtils.RunAndGetOutput(proc));
+            string output = await Task.Run(() => OsUtils.RunAndGetOutput(proc)).WaitAsync(TimeSpan.FromSeconds(60));     // TimeoutException = deadlock
 
-            Assert.True(run.Wait(TimeSpan.FromSeconds(60)), "Process output read deadlocked");
-            Assert.Contains("stderr line 6000", run.Result);
+            Assert.Contains("stderr line 6000", output);
         }
 
         [DllImport("kernel32.dll", SetLastError = true)]

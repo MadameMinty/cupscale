@@ -16,7 +16,7 @@ namespace Cupscale.UI
         public static void Init ()
         {
             if(!running)
-                ShowQueue();
+                _ = ShowQueue();
         }
 
         static async Task ShowQueue ()

@@ -41,7 +41,7 @@ namespace Cupscale.Forms
             
         }
 
-        public async Task Refresh ()
+        public async Task RefreshDependencies ()
         {
             if (sw.ElapsedMilliseconds < 1000 && sw.ElapsedMilliseconds != 0)
             {
@@ -215,7 +215,7 @@ namespace Cupscale.Forms
                 return;
 
             await Task.Delay(100);
-            await Refresh();
+            await RefreshDependencies();
         }
     }
 }
