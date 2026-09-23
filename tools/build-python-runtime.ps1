@@ -2,7 +2,7 @@
 Builds the embedded Python runtime package (py.7z) used by the ESRGAN (PyTorch) backend.
 
 Output: <OutDir>\py.7z containing a top-level "py" folder with a relocatable CPython,
-torch (CUDA wheel), OpenCV, NumPy and the ONNX packages needed by pth2ncnn.
+torch + torchvision (CUDA wheels), spandrel, OpenCV, NumPy and the ONNX packages needed by pth2ncnn.
 
 Install it by hosting py.7z and setting "pythonRuntimeUrl" (Turing or newer) or
 "pythonRuntimeUrlLegacy" (older GPUs) in config.json to its URL, or by extracting it into
@@ -41,10 +41,12 @@ $python = Join-Path $pyDir "python.exe"
 
 $torch = if ($TorchVersion) { "torch==$TorchVersion" } else { "torch" }
 
-uv pip install --python $python --break-system-packages --index-url "https://download.pytorch.org/whl/$torchIndex" $torch
+# torchvision (needed by spandrel) must come from the same index to match torch
+uv pip install --python $python --break-system-packages --index-url "https://download.pytorch.org/whl/$torchIndex" $torch torchvision
 if ($LASTEXITCODE -ne 0) { throw "torch install failed" }
 
-uv pip install --python $python --break-system-packages numpy opencv-python-headless onnx onnxoptimizer
+# spandrel: non-ESRGAN architectures (RealPLKSR, OmniSR, SPAN, DAT, HAT...); extra arches: SRFormer etc.
+uv pip install --python $python --break-system-packages numpy opencv-python-headless onnx onnxoptimizer spandrel spandrel_extra_arches safetensors
 if ($LASTEXITCODE -ne 0) { throw "package install failed" }
 
 # Slim down: bytecode caches, tests, headers/static libs, Tk/IDLE, packaging tools and entry-point exes
@@ -67,7 +69,7 @@ Get-ChildItem (Join-Path $pyDir "Lib\site-packages") -Directory -Filter "*.dist-
 Get-ChildItem (Join-Path $pyDir "DLLs") -Filter "_test*.pyd" | Remove-Item -Force
 Get-ChildItem (Join-Path $pyDir "Lib\site-packages\torch\lib") -Filter "*.lib" -ErrorAction SilentlyContinue | Remove-Item -Force
 
-& $python -c "import torch, torch.nn.functional, cv2, numpy, onnx, onnxoptimizer; print('torch', torch.__version__, 'cuda', torch.version.cuda, 'archs', torch.cuda.get_arch_list())"
+& $python -c "import torch, torch.nn.functional, torchvision, cv2, numpy, onnx, onnxoptimizer, spandrel, spandrel_extra_arches, safetensors; print('torch', torch.__version__, 'cuda', torch.version.cuda, 'archs', torch.cuda.get_arch_list())"
 if ($LASTEXITCODE -ne 0) { throw "runtime import check failed" }
 Get-ChildItem $pyDir -Recurse -Directory -Filter "__pycache__" | Remove-Item -Recurse -Force     # Created by the check
 
