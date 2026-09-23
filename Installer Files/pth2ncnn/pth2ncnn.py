@@ -104,18 +104,18 @@ def TorchToONNX(model: PyTorchModel, fp16=False) -> OnnxModel:
 
     with BytesIO() as f:
         print("Exporting ONNX")
-        torch.onnx.export(
-            model,
-            dummy_input,
-            f,
+        export_args = dict(
             opset_version=11,
             verbose=False,
             input_names=["data"],
             output_names=["output"],
             dynamic_axes=dynamic_axes,
             do_constant_folding=True,
-
         )
+        try:  # torch >= 2.9 defaults to the dynamo exporter (needs onnxscript, different graph)
+            torch.onnx.export(model, dummy_input, f, dynamo=False, **export_args)
+        except TypeError:  # older torch has no dynamo argument
+            torch.onnx.export(model, dummy_input, f, **export_args)
         print("Exporting Finished")
         f.seek(0)
         onnx_model_bytes = f.read()
