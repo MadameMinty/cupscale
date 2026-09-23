@@ -160,15 +160,31 @@ namespace Cupscale.Cupscale
         {
             foreach (string file in Directory.GetFiles(Paths.imgOutPath, "*.*.png", SearchOption.AllDirectories))   // Rename to tmp
             {
+                if (IoUtils.IsFileLocked(file))
+                    continue;
+
                 try
                 {
-                    string newPath = file.Substring(0, file.Length - 8) + ".tmp";
-                    string movePath = Path.Combine(Paths.imgOutPath, Path.GetFileName(newPath));
-                    Logger.Log("[Queue] Renaming & moving " + file + " => " + movePath);
+                    string movePath = GetTmpPath(file, Paths.imgOutPath, Paths.imgInPath, File.Exists);
+                    Logger.Log("[Queue] Renaming " + file + " => " + movePath);
+                    IoUtils.DeleteIfExists(movePath);
                     File.Move(file, movePath);
                 }
-                catch { }
+                catch (Exception e)
+                {
+                    Logger.Log($"[Queue] Failed to rename {file}: {e.Message}");
+                }
             }
+        }
+
+        /// <summary> Maps AI output "{orig}.png" (or legacy "{orig}.png.png") to "{orig}.tmp", keeping subfolders. Inputs are always "{orig}.png". </summary>
+        internal static string GetTmpPath(string outFile, string outRoot, string inRoot, Func<string, bool> fileExists)
+        {
+            string rel = outFile.Substring(outRoot.TrimEnd('\\', '/').Length).TrimStart('\\', '/');
+            bool matchesInput = fileExists(Path.Combine(inRoot, rel));
+            bool legacyDoubleExt = !matchesInput && rel.EndsWith(".png.png", StringComparison.OrdinalIgnoreCase);
+            string origRel = rel.Substring(0, rel.Length - (legacyDoubleExt ? 8 : 4));
+            return Path.Combine(outRoot, origRel + ".tmp");
         }
     }
 }
