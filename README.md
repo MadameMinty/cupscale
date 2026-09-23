@@ -9,7 +9,7 @@ Based around [xinntao's ESRGAN](https://github.com/xinntao/ESRGAN) implemented v
 
 AMD/Intel GPU compatibility is possible thanks to BlueAmulet's [esrgan-ncnn-vulkan](https://github.com/BlueAmulet/realsr-ncnn-vulkan) based on nihui's [realsr-ncnn-vulkan](https://github.com/nihui/realsr-ncnn-vulkan) running on Tencent's [ncnn](https://github.com/Tencent/ncnn) framework, as well as [xinntao's Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN).
 
-PTH2NCNN and other features are possible thanks to [ChaiNNer](https://github.com/chaiNNer-org/ChaiNNer). 
+PTH2NCNN and other features are possible thanks to [ChaiNNer](https://github.com/chaiNNer-org/ChaiNNer). Non-ESRGAN architectures load via its [spandrel](https://github.com/chaiNNer-org/spandrel) and [spandrel_extra_arches](https://github.com/chaiNNer-org/spandrel_extra_arches).
 
 This repo is a fork of [DrPleaseRespect's fork](https://github.com/DrPleaseRespect/cupscale) of [n00mkrad's Cupscale](https://github.com/n00mkrad/cupscale) with further fixes and ideas harvested from other forks (notably [RaaynML's cupscale_continued](https://github.com/RaaynML/cupscale_continued)) and forgotten PRs after review.
 
@@ -36,6 +36,7 @@ Temporary files are stored in the installation directory by default, which is wh
 ## Features:
 
 - CUDA, Vulkan/NCNN or CPU supported, with included model converter for NCNN
+- Model architectures: ESRGAN (old and new arch), Real-ESRGAN (incl. Compact), SPSR; plus RealPLKSR, OmniSR, SRFormer, SPAN, DAT, HAT, SwinIR and more via spandrel (CUDA/CPU only). `.pth` and `.safetensors` files
 - On-the-fly Model Interpolation
 - Model Chaining (Run images through multiple models at once)
 - Batch Upscaling (Load a directory or multiple single images), keeping the folder structure
