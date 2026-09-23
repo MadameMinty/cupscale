@@ -1,9 +1,10 @@
 <#
-Downloads third-party binaries that are not tracked in git:
-  - FFmpeg (gyan.dev "essentials" release build) -> Installer Files\ffmpeg.exe
-  - 7-Zip x64 standalone (7za.exe)               -> Code\Resources\7za.exe (embedded into Cupscale.exe)
+Updates third-party binaries:
+  - FFmpeg (gyan.dev "essentials" release build) -> Installer Files\ffmpeg.exe (untracked, for local builds;
+    releases leave it out and Cupscale downloads it on demand)
+  - 7-Zip x64 standalone (7za.exe)               -> Code\Resources\7za.exe (tracked, embedded into Cupscale.exe)
 
-Run before building a release. Requires internet access; uses 7zr.exe from 7-zip.org to unpack.
+Requires internet access; uses 7zr.exe from 7-zip.org to unpack.
 #>
 param(
     [string]$SevenZipVersion = "2603",    # 26.03; see https://www.7-zip.org/download.html

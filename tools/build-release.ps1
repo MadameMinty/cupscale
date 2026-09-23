@@ -2,10 +2,9 @@
 Builds a release zip: build\Cupscale-<VERSION>.zip
 
   Cupscale\Cupscale.exe
-  Cupscale\CupscaleData\bin\...   (Installer Files, incl. ffmpeg.exe)
+  Cupscale\CupscaleData\bin\...   (Installer Files)
 
-The Python runtime (py.7z) is not included; Cupscale downloads it on demand.
-Fetches ffmpeg.exe/7za.exe via fetch-binaries.ps1 if missing.
+Not included, downloaded by Cupscale on demand: FFmpeg and the Python runtime (py.7z).
 #>
 $ErrorActionPreference = "Stop"
 $repo = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot ".."))
@@ -14,11 +13,6 @@ $installerFiles = Join-Path $repo "Installer Files"
 $7za = Join-Path $repo "Code\Resources\7za.exe"
 $stage = Join-Path $repo "build\release"
 $zip = Join-Path $repo "build\Cupscale-$version.zip"
-
-$fetchArgs = @{}
-if (Test-Path (Join-Path $installerFiles "ffmpeg.exe")) { $fetchArgs.SkipFfmpeg = $true }
-if (Test-Path $7za) { $fetchArgs.Skip7za = $true }
-if ($fetchArgs.Count -lt 2) { & (Join-Path $PSScriptRoot "fetch-binaries.ps1") @fetchArgs }
 
 if (Test-Path $stage) { Remove-Item -Recurse -Force $stage }
 $app = Join-Path $stage "Cupscale"
@@ -31,7 +25,7 @@ if ($LASTEXITCODE -ne 0) { throw "dotnet publish failed" }
 New-Item -ItemType Directory -Force $bin | Out-Null
 Get-ChildItem (Join-Path $stage "publish\*") -File -Exclude *.pdb | Copy-Item -Destination $app
 if (-not (Test-Path (Join-Path $app "Cupscale.exe"))) { throw "Cupscale.exe missing from publish output" }
-robocopy $installerFiles $bin /E /XD __pycache__ /NFL /NDL /NJH /NJS /NP | Out-Null
+robocopy $installerFiles $bin /E /XD __pycache__ /XF ffmpeg.exe /NFL /NDL /NJH /NJS /NP | Out-Null
 if ($LASTEXITCODE -ge 8) { throw "robocopy failed ($LASTEXITCODE)" }     # 1-7 = success variants
 
 if (Test-Path $zip) { Remove-Item -Force $zip }

@@ -23,6 +23,8 @@ Image processing by [ImageMagick](https://imagemagick.org) via [Magick.NET](http
 
 The application is more or less portable. It's a single executable that you can run anywhere, with no .NET installation needed (Windows x64 only).
 
+FFmpeg (for video) and the Python runtime (for CUDA) are downloaded on first use.
+
 Temporary files are stored in the installation directory by default, which is why you shouldn't install the application in protected locations like Program Files.
 
 ## Supported AI Backends:
@@ -48,6 +50,6 @@ Temporary files are stored in the installation directory by default, which is wh
 
 ## Building:
 
-- `tools/fetch-binaries.ps1` downloads FFmpeg and 7-Zip.
-- `dotnet publish Code/Cupscale.csproj -c Release -p:Platform=x64` builds the executable (.NET 10 SDK).
+- `tools/build-release.ps1` builds the release zip into `build/` (.NET 10 SDK), named after `VERSION`.
+- `tools/fetch-binaries.ps1` updates 7-Zip and fetches FFmpeg for local builds (releases download FFmpeg on first use).
 - `tools/build-python-runtime.ps1` builds the embedded Python runtime (`py.7z`).
