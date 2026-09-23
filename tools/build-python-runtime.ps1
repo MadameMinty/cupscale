@@ -61,7 +61,7 @@ if (Test-Path $archive) { Remove-Item -Force $archive }
 
 Push-Location $OutDir
 try {
-    & $sevenZip a -t7z -mx=7 -mmt=on $archive "py" | Out-Null
+    & $sevenZip a -t7z -mx=8 -mmt=on $archive "py" | Out-Null
     if ($LASTEXITCODE -ne 0) { throw "7-Zip failed" }
 }
 finally {
