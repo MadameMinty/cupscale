@@ -246,6 +246,8 @@ namespace Cupscale
 
         public static async void BeforeAfterAnim (bool save, bool h264)
         {
+            if (h264 && !await FFmpeg.EnsureAvailable())
+                return;
 
             string ext = "gif";
             if (h264) ext = "mp4";

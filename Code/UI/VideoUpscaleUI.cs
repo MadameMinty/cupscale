@@ -71,6 +71,9 @@ namespace Cupscale.UI
                 return;
             }
 
+            if (!await FFmpeg.EnsureAvailable())
+                return;
+
             Program.mainForm.SetBusy(true);
             LoadVideo();
             Print("Extracting frames...");

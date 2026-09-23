@@ -108,10 +108,13 @@ namespace Cupscale
         static HashSet<string> cachedEncoders;
         static string cachedFor;
 
-        /// <summary> Encoders compiled into the configured ffmpeg (cached per ffmpeg path). </summary>
+        /// <summary> Encoders compiled into the configured ffmpeg (cached per ffmpeg path). All known ones if ffmpeg is not installed yet. </summary>
         public static HashSet<string> GetFfmpegEncoders()
         {
-            string exe = FFmpeg.GetExePath();
+            string exe = FFmpeg.FindExe();
+
+            if (exe == null)    // The downloadable build covers every entry
+                return new HashSet<string>(All.SelectMany(e => e.FfmpegEncoders));
 
             if (cachedEncoders == null || cachedFor != exe)
             {

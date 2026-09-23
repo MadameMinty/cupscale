@@ -37,5 +37,16 @@ namespace Cupscale.IO
             if (exitCode != 0)
                 throw new IOException($"7za failed with exit code {exitCode}: {output.Trim()}");
         }
+
+        /// <summary> Extracts files named fileName (from any subfolder) flat into outDir. Throws on failure. </summary>
+        public static void ExtractFile(string archivePath, string fileName, string outDir)
+        {
+            var proc = OsUtils.NewProcess(true, GetExePath());
+            proc.StartInfo.Arguments = $"e {archivePath.Wrap()} -o{outDir.Wrap()} {fileName.Wrap()} -r -y -bso0 -bsp0";
+            string output = OsUtils.RunAndGetOutput(proc, out int exitCode);
+
+            if (exitCode != 0 || !File.Exists(Path.Combine(outDir, fileName)))
+                throw new IOException($"7za failed to extract {fileName} (exit code {exitCode}): {output.Trim()}");
+        }
     }
 }

@@ -52,6 +52,28 @@ namespace CupscaleTests
         }
 
         [Fact]
+        public void FindOnPath_FindsExeInPathDirs()
+        {
+            string dir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "cupscale-path-" + System.Guid.NewGuid().ToString("N"));
+            System.IO.Directory.CreateDirectory(dir);
+
+            try
+            {
+                string exe = System.IO.Path.Combine(dir, "ffmpeg.exe");
+                System.IO.File.WriteAllText(exe, "");
+                string pathVar = $@"C:\does-not-exist;""{dir}"";;";
+
+                Assert.Equal(exe, FFmpeg.FindOnPath("ffmpeg", pathVar));
+                Assert.Equal(exe, FFmpeg.FindOnPath("ffmpeg.exe", pathVar));
+                Assert.Null(FFmpeg.FindOnPath("ffprobe", pathVar));
+            }
+            finally
+            {
+                System.IO.Directory.Delete(dir, true);
+            }
+        }
+
+        [Fact]
         public void ParseEncoderList_ReadsVideoEncodersOnly()
         {
             string output = "Encoders:\n V..... = Video\n ------\n V....D libx264              libx264 H.264\n A....D aac                  AAC\n V....D h264_nvenc           NVIDIA NVENC H.264 encoder\n";
