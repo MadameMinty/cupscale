@@ -106,8 +106,7 @@ namespace Cupscale.Main
 			initialized = true;
 			BusyCheckLoop();
 			_ = Task.Run(() => LoadPatronsAsync());
-			_ = Task.Run(() => Servers.Init());
-			_ = Task.Run(() => CheckDependenciesAsync());
+			_ = CheckPythonRuntime();	// UI thread: it may show a prompt
 		}
 
 		async Task LoadPatronsAsync()
@@ -117,19 +116,15 @@ namespace Cupscale.Main
 				"supporting my projects:\n\n" + previewImg.Text;
 		}
 
-		async Task CheckDependenciesAsync()
+		/// <summary> Offers the Python runtime download on NVIDIA systems; others get asked when they first need Python. </summary>
+		async Task CheckPythonRuntime()
 		{
-			bool hasAnyPy = Dependencies.SysPyAvail() || Dependencies.EmbedPyAvail();
-			bool hasNvGpu = NvApi.gpuList.Count > 0; 
+			if (NvApi.gpuList.Count < 1 || Upscale.currentAi != Implementations.Imps.esrganPytorch || !EmbeddedPython.IsEnabled() || EmbeddedPython.IsInstalled())
+				return;
 
-            if (!hasAnyPy && hasNvGpu)
-            {
-				DialogResult dialog = MessageBox.Show("You have no Python runtime installed, which is required for CUDA-based upscaling! " +
-					"Download it now?", "No Python Runtime Found", MessageBoxButtons.YesNo);
-
-				bool yes = dialog == DialogResult.Yes;
-				new DependencyCheckerForm(yes, yes).ShowDialog();
-			}
+			SetBusy(true);
+			await EmbeddedPython.EnsureAvailable();
+			SetBusy(false);
 		}
 
 		public async void BusyCheckLoop ()

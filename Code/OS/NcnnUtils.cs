@@ -49,6 +49,8 @@ namespace Cupscale.OS
                 if (IoUtils.GetAmountOfFiles(outPath, false) < 2)
                 {
                     Logger.Log("Running model converter...");
+                    if (!await EmbeddedPython.EnsureAvailable())
+                        throw new Exception("Converting PyTorch models to NCNN needs the Python runtime.");
                     dialog = new DialogForm("Converting ESRGAN model to NCNN format...");
                     await RunConverter(modelPath, outPath);
 
@@ -204,6 +206,12 @@ namespace Cupscale.OS
 
 				if (scaleCache.TryGetValue(cacheKey, out int cached))
 					return cached;
+
+				if (!await EmbeddedPython.EnsureAvailable())
+				{
+					Logger.Log("No Python runtime for the NCNN scale check - assuming 4x.");
+					return 4;
+				}
 
 				await RunScaleCheck(bin_file, param_file);
 				var match = System.Text.RegularExpressions.Regex.Match(lastScaleCheckOutput, @"Scale:\s*(\d+)");

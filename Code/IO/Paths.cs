@@ -19,8 +19,6 @@ namespace Cupscale.IO
 		public static string compositionOut;
 		public static string framesOutPath;
 
-		public static readonly string pythonTuringPath = "flowframes/setupfiles/py-tu/v1/py-tu.7z";
-		public static readonly string pythonAmperePath = "flowframes/setupfiles/py-amp/v1/py-amp.7z";
 		public static readonly string pythonRuntimeReleaseUrl = "https://github.com/MadameMinty/cupscale/releases/download/py314-cu132/py.7z";	// tools/build-python-runtime.ps1 output
 
 		public static readonly string ncnnMdlDir = ".ncnn-models";

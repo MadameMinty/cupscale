@@ -1,14 +1,10 @@
-﻿using Cupscale.Forms;
 using Cupscale.IO;
 using Cupscale.Main;
 using Cupscale.UI;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -31,7 +27,7 @@ namespace Cupscale.OS
                     return "";
                 }
             }
-                
+
             return "python";
         }
 
@@ -43,6 +39,11 @@ namespace Cupscale.OS
         public static bool IsEnabled()
         {
             return Config.GetInt("esrganPytorchPythonRuntime") == 1;
+        }
+
+        public static bool IsInstalled()
+        {
+            return File.Exists(GetEmbedPyPath());
         }
 
         public static async Task Init()
@@ -61,10 +62,10 @@ namespace Cupscale.OS
 
         public static async Task PublicRunCompact()
         {
-            extractPath = Path.Combine(Installer.path, "py");
-            if (Directory.Exists(extractPath))
+            string pyDir = Path.Combine(Installer.path, "py");
+            if (Directory.Exists(pyDir))
             {
-                await RunCompact();
+                await RunCompact(pyDir);
                 Program.ShowMessage("Compression Complete!", "Compressor");
             }
             else
@@ -73,127 +74,97 @@ namespace Cupscale.OS
             }
         }
 
-        static TextBox logBox;
-        static HTAlt.WinForms.HTButton runBtn;
-        static string downloadPath;
-        static string extractPath;
+        static Task<bool> pendingInstall;
 
-        public static async Task Download(TextBox logTextbox, HTAlt.WinForms.HTButton runButton)
+        /// <summary>
+        /// True if the embedded runtime is disabled (system Python is used) or installed. Otherwise offers to download it.
+        /// Concurrent callers share one prompt and download.
+        /// </summary>
+        public static Task<bool> EnsureAvailable()
         {
-            logBox = logTextbox;
-            runBtn = runButton;
-            runBtn.Enabled = false;
-            Print("Initializing...");
-            downloadPath = Path.Combine(Installer.path, "py.7z");
-            extractPath = Path.Combine(Installer.path, "py");
-            isExtracting = false;
+            if (!IsEnabled() || IsInstalled())
+                return Task.FromResult(true);
 
-            await Task.Delay(10);
+            if (pendingInstall == null || pendingInstall.IsCompleted)
+                pendingInstall = PromptAndInstall();
 
-            Print("Checking disk space before installation...");
-            float diskSpaceMb = IoUtils.GetDiskSpace(Paths.GetDataPath());
-            Print($"Available disk space on the current drive: {diskSpaceMb} MB.");
+            return pendingInstall;
+        }
 
-            if (diskSpaceMb < 5000)
-            {
-                Print("Not enough disk space on the current drive!");
-                runBtn.Enabled = true;
-                return;
-            }
+        static async Task<bool> PromptAndInstall()
+        {
+            DialogResult answer = MessageBox.Show(Program.mainForm, "PyTorch upscaling and model conversion need the Python runtime, which is not installed.\n\n" +
+                "Download it now? (1.6 GB download, 3.2 GB installed)\n\nAlternatively, select a system Python in the Settings.", "Python Runtime", MessageBoxButtons.YesNo);
 
-            IoUtils.DeleteIfExists(downloadPath);
-            await Task.Delay(10);
-
-            string url = GetRuntimeUrl();
-            Logger.Log($"Downloading embedded Python from '{url}'");
-
-            Print("Downloading compressed python runtime...");
-            lastProgress = null;
-
-            try
-            {
-                await IoUtils.DownloadFileAsync(url, downloadPath, DownloadProgressChanged);
-            }
-            catch (Exception e)
-            {
-                Print($"Download failed: {e.Message}");
-                Logger.Log($"Embedded Python download failed: {e}");
-                IoUtils.TryDeleteIfExists(downloadPath);
-                runBtn.Enabled = true;
-                return;
-            }
+            if (answer != DialogResult.Yes)
+                return false;
 
             try
             {
                 await Install();
+                return true;
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                Print($"Installation failed: {ex.Message}");
-                Logger.Log($"Embedded Python installation failed: {ex}");
+                Logger.Log($"Python runtime installation failed: {e}");
+                Program.mainForm.SetProgress(0, "Python runtime installation failed.");
+                Program.ShowMessage($"Installing the Python runtime failed: {e.Message}\n\nYou can also extract py.7z from\n{GetRuntimeUrl()}\ninto {Installer.path} manually.", "Error");
+                return false;
+            }
+        }
+
+        static async Task Install()
+        {
+            string archive = Path.Combine(Installer.path, "py-download.7z");
+            string pyDir = Path.Combine(Installer.path, "py");
+            string url = GetRuntimeUrl();
+
+            if (IoUtils.GetDiskSpace(Paths.GetDataPath()) < 5000)
+                throw new IOException($"Not enough disk space on {Path.GetPathRoot(Paths.GetDataPath())} (5 GB needed).");
+
+            Logger.Log($"Downloading embedded Python from '{url}'");
+
+            try
+            {
+                Directory.CreateDirectory(Installer.path);
+                await IoUtils.DownloadFileAsync(url, archive, (done, total) => Program.mainForm.SetProgress(total > 0 ? done * 100f / total : -1f,
+                    $"Downloading Python runtime... {done / 1024 / 1024} / {(total > 0 ? $"{total / 1024 / 1024}" : "?")} MB"));
+
+                Program.mainForm.SetProgress(100, "Extracting Python runtime...");
+                if (Directory.Exists(pyDir))
+                    Directory.Delete(pyDir, true);
+                await Task.Run(() => SevenZip.Extract(archive, Installer.path));
+
+                if (!IsInstalled())
+                    throw new IOException("The downloaded archive does not contain py\\python.exe.");
+
+                await Init();
+                Program.mainForm.SetProgress(0, "Installed Python runtime.");
+                Logger.Log("Installed embedded Python runtime.");
             }
             finally
             {
-                isExtracting = false;
-                runBtn.Enabled = true;
+                IoUtils.TryDeleteIfExists(archive);
             }
         }
 
         /// <summary>
-        /// Config "pythonRuntimeUrl" (Turing or newer, e.g. a CUDA 12.8 build) or "pythonRuntimeUrlLegacy" (older GPUs)
-        /// override the default server package.
+        /// Config "pythonRuntimeUrl" (default: this repo's release), or "pythonRuntimeUrlLegacy" if set and there is no Turing or newer GPU
+        /// (the default runtime's CUDA needs one; CPU upscaling and NCNN conversion work anywhere).
         /// </summary>
         static string GetRuntimeUrl()
         {
-            string custom = Config.Get(NvApi.HasTuringOrNewer() ? "pythonRuntimeUrl" : "pythonRuntimeUrlLegacy");
-
-            if (!string.IsNullOrWhiteSpace(custom))
-                return custom.Trim();
-
-            string srv = Servers.closestServer.GetUrl();
-            return Path.Combine(srv, NvApi.HasAmpereOrNewer() ? Paths.pythonAmperePath : Paths.pythonTuringPath).Replace("\\", "/");
+            string legacy = NvApi.HasTuringOrNewer() ? "" : Config.Get("pythonRuntimeUrlLegacy");
+            string url = string.IsNullOrWhiteSpace(legacy) ? Config.Get("pythonRuntimeUrl") : legacy;
+            return string.IsNullOrWhiteSpace(url) ? Paths.pythonRuntimeReleaseUrl : url.Trim();
         }
 
-        static async Task Install ()
-        {
-            Print("Done downloading!");
-            Print("Extracting...");
-
-            if (Directory.Exists(extractPath))
-                IoUtils.ClearDir(extractPath);
-
-            List<Task> tasks = new List<Task>();
-            isExtracting = true;
-            tasks.Add(CheckDownloadedFileSizeAsync());
-            tasks.Add(ExtractAsync());
-            await Task.WhenAll(tasks);
-
-            if(Directory.Exists(Path.Combine(Installer.path, "FlowframesData")))
-            {
-                DirectoryInfo parentDir = new DirectoryInfo(Path.Combine(Installer.path, "FlowframesData", "pkgs"));
-                DirectoryInfo dir = parentDir.GetDirectories().First();
-                dir.MoveTo(extractPath);
-            }
-
-            Print("Done extracting files.");
-            MsgBox msg = Program.ShowMessage("The Python files will now be compressed to reduce the amount of storage space needed " +
-                "by about 40%.\nThis can take a few minutes.", "Message");
-            while (DialogQueue.IsOpen(msg)) await Task.Delay(50);
-            Print("Compressing files...");
-            await RunCompact();
-            Print("Done!");
-            Config.Set("esrganPytorchPythonRuntime", "1");
-            await Init();
-            MsgBox msg2 = Program.ShowMessage("Installed embedded Python runtime and enabled it!\nIf you want to disable it, you can do so in the settings.", "Message");
-            while (DialogQueue.IsOpen(msg2)) await Task.Delay(50);
-        }
-
-        static async Task RunCompact ()
+        static async Task RunCompact (string pyDir)
         {
             bool stayOpen = Config.GetInt("cmdDebugMode") == 2;
             string opt = stayOpen ? "/K" : "/C";
             Process compact = OsUtils.NewProcess(false);
-            compact.StartInfo.Arguments = $"{opt} compact /C /S:{extractPath.Wrap()}";
+            compact.StartInfo.Arguments = $"{opt} compact /C /S:{pyDir.Wrap()}";
             OsUtils.StartTracked(compact);
 
             await Task.Run(() =>
@@ -204,79 +175,7 @@ namespace Cupscale.OS
             });
         }
 
-        static string lastProgress;
-        static void DownloadProgressChanged(long done, long total)
-        {
-            string progress = total > 0 ? $"{done * 100 / total}%" : $"{done / 1024 / 1024} MB";   // MB if the size is unknown
-            if (progress != lastProgress)
-            {
-                lastProgress = progress;
-                Print("Downloading compressed python runtime - " + progress, true);
-            }
-        }
-
-        static bool isExtracting;
-        static async Task ExtractAsync()
-        {
-            await Task.Run(() =>
-            {
-                try
-                {
-                    SevenZip.Extract(downloadPath, Installer.path);
-                    File.Delete(downloadPath);
-                }
-                finally
-                {
-                    isExtracting = false;
-                }
-            });
-        }
-
-        static async Task CheckDownloadedFileSizeAsync()
-        {
-            await Task.Run(async () =>
-            {
-                while (isExtracting)
-                {
-                    try
-                    {
-                        if (Directory.Exists(extractPath))
-                        {
-                            long currentBytes = IoUtils.GetDirSize(extractPath, true);
-                            int mb = (int)(currentBytes / 1024f / 1000f);
-                            Print("Installed " + mb + " MB of 2500", true);
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        Print("Error: " + e.Message);
-                    }
-                    await Task.Delay(3000);
-                }
-            });
-        }
-
         [DllImport("user32.dll")]
         static extern int SetWindowText(IntPtr hWnd, string text);
-
-        static void Print(string s, bool replaceLastLine = false)
-        {
-            if (logBox.InvokeRequired)
-            {
-                logBox.BeginInvoke((Action)(() => Print(s, replaceLastLine)));
-                return;
-            }
-
-            if (replaceLastLine)
-            {
-                logBox.Text = logBox.Text.Remove(logBox.Text.LastIndexOf(Environment.NewLine));
-            }
-            if(string.IsNullOrWhiteSpace(logBox.Text))
-                logBox.Text += s;
-            else
-                logBox.Text += Environment.NewLine + s;
-            logBox.SelectionStart = logBox.Text.Length;
-            logBox.ScrollToCaret();
-        }
     }
 }

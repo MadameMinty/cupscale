@@ -92,13 +92,11 @@ namespace Cupscale.Forms
             Program.mainForm.LoadEsrganOptions();
             Program.mainForm.RefreshOutputQuality();
 
-            if(Config.GetInt("esrganPytorchPythonRuntime") == 1 && !File.Exists(EmbeddedPython.GetEmbedPyPath()))
+            if (EmbeddedPython.IsEnabled() && !EmbeddedPython.IsInstalled() && !Program.busy)
             {
-                MsgBox msg = Program.ShowMessage("You enabled the embedded Python runtime but haven't downloaded and installed it.\n" +
-                    "You can download it in the Dependency Checker window.");
-                while (DialogQueue.IsOpen(msg)) await Task.Delay(50);
-                
-                new DependencyCheckerForm(true).ShowDialog();
+                Program.mainForm.SetBusy(true);
+                await EmbeddedPython.EnsureAvailable();
+                Program.mainForm.SetBusy(false);
             }
         }
 

@@ -25,6 +25,12 @@ namespace Cupscale.Implementations
 
         public static async Task Run(string inpath, string outpath, ModelData mdl, bool cacheSplitDepth, bool alpha, bool showTileProgress)
         {
+            if (!await EmbeddedPython.EnsureAvailable())
+            {
+                Program.Cancel("PyTorch upscaling needs the Python runtime.");
+                return;
+            }
+
             Program.mainForm.SetProgress(3f, "Loading ESRGAN (Pytorch)...");
             File.Delete(ProgressLogFile);
             progressFileOffset = 0;
@@ -127,6 +133,9 @@ namespace Cupscale.Implementations
 
         public static async Task<string> Interpolate(ModelData mdl)
         {
+            if (!await EmbeddedPython.EnsureAvailable())
+                return null;
+
             bool showWindow = Config.GetInt("cmdDebugMode") > 0;
             bool stayOpen = Config.GetInt("cmdDebugMode") == 2;
 

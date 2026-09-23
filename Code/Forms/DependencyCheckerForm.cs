@@ -27,13 +27,9 @@ namespace Cupscale.Forms
         bool torchAvail;
         bool cv2Avail;
 
-        public DependencyCheckerForm(bool openPyInstaller = false, bool startPyInstall = false)
+        public DependencyCheckerForm()
         {
             InitializeComponent();
-
-            if (openPyInstaller)
-                tabList1.SelectedIndex = 1;
-
         }
 
         private async void DependencyCheckerForm_Load(object sender, EventArgs e)
