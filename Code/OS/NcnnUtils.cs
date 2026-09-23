@@ -4,6 +4,7 @@ using Cupscale.Implementations;
 using Cupscale.IO;
 using Cupscale.UI;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Globalization;
@@ -191,14 +192,31 @@ namespace Cupscale.OS
 			lastScaleCheckOutput += $"{data}\n";
 		}
 
+		static readonly Dictionary<string, int> scaleCache = new Dictionary<string, int>();
+
 		public static async Task<int> GetNcnnModelScale(string modelDir)
 		{
             try
             {
 				string bin_file = Directory.GetFiles(modelDir, "*.bin")[0];
 				string param_file = Directory.GetFiles(modelDir, "*.param")[0];
+				string cacheKey = $"{bin_file}|{File.GetLastWriteTimeUtc(bin_file).Ticks}";
+
+				if (scaleCache.TryGetValue(cacheKey, out int cached))
+					return cached;
+
 				await RunScaleCheck(bin_file, param_file);
-				return lastScaleCheckOutput.GetInt();
+				var match = System.Text.RegularExpressions.Regex.Match(lastScaleCheckOutput, @"Scale:\s*(\d+)");
+
+				if (!match.Success)
+				{
+					Logger.Log($"Failed to parse NCNN model scale: {lastScaleCheckOutput.Trim()}");
+					return 4;
+				}
+
+				int scale = int.Parse(match.Groups[1].Value);
+				scaleCache[cacheKey] = scale;
+				return scale;
 			}
 			catch (Exception e)
             {
