@@ -129,6 +129,8 @@
             this.tableLayoutPanel5 = new System.Windows.Forms.TableLayoutPanel();
             this.panel8 = new System.Windows.Forms.Panel();
             this.vidEnableAudio = new System.Windows.Forms.CheckBox();
+            this.ffmpegPath = new System.Windows.Forms.TextBox();
+            this.ffmpegPathLabel = new System.Windows.Forms.Label();
             this.label43 = new System.Windows.Forms.Label();
             this.label44 = new System.Windows.Forms.Label();
             this.panel9 = new System.Windows.Forms.Panel();
@@ -1353,6 +1355,8 @@
             this.panel8.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(36)))), ((int)(((byte)(36)))), ((int)(((byte)(36)))));
             this.panel8.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.panel8.Controls.Add(this.vidEnableAudio);
+            this.panel8.Controls.Add(this.ffmpegPath);
+            this.panel8.Controls.Add(this.ffmpegPathLabel);
             this.panel8.Controls.Add(this.label43);
             this.panel8.Controls.Add(this.label44);
             this.panel8.ForeColor = System.Drawing.Color.White;
@@ -1369,7 +1373,25 @@
             this.vidEnableAudio.Size = new System.Drawing.Size(18, 17);
             this.vidEnableAudio.TabIndex = 21;
             this.vidEnableAudio.UseVisualStyleBackColor = true;
-            // 
+            //
+            // ffmpegPath
+            //
+            this.ffmpegPath.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            this.ffmpegPath.ForeColor = System.Drawing.Color.White;
+            this.ffmpegPath.Location = new System.Drawing.Point(220, 107);
+            this.ffmpegPath.Name = "ffmpegPath";
+            this.ffmpegPath.Size = new System.Drawing.Size(220, 22);
+            this.ffmpegPath.TabIndex = 22;
+            //
+            // ffmpegPathLabel
+            //
+            this.ffmpegPathLabel.AutoSize = true;
+            this.ffmpegPathLabel.Location = new System.Drawing.Point(6, 110);
+            this.ffmpegPathLabel.Name = "ffmpegPathLabel";
+            this.ffmpegPathLabel.Size = new System.Drawing.Size(170, 16);
+            this.ffmpegPathLabel.TabIndex = 23;
+            this.ffmpegPathLabel.Text = "FFmpeg Path (empty = auto)";
+            //
             // label43
             // 
             this.label43.AutoSize = true;
@@ -1908,6 +1930,8 @@
         private System.Windows.Forms.PictureBox pictureBox13;
         private System.Windows.Forms.Panel panel8;
         private System.Windows.Forms.CheckBox vidEnableAudio;
+        private System.Windows.Forms.TextBox ffmpegPath;
+        private System.Windows.Forms.Label ffmpegPathLabel;
         private System.Windows.Forms.Label label43;
         private System.Windows.Forms.Label label44;
         private System.Windows.Forms.CheckBox modelSelectAutoExpand;

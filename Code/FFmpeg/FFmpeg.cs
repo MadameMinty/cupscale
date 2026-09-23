@@ -10,11 +10,23 @@ namespace Cupscale
     {
         public static string lastOutputFfmpeg;
 
+        /// <summary> Setting "ffmpegPath" if set, else bundled bin\ffmpeg.exe, else ffmpeg from PATH. </summary>
+        public static string GetExePath()
+        {
+            string custom = Config.Get("ffmpegPath")?.Trim().Trim('"');
+
+            if (!string.IsNullOrWhiteSpace(custom))
+                return custom;
+
+            string bundled = System.IO.Path.Combine(Paths.binPath, "ffmpeg.exe");
+            return System.IO.File.Exists(bundled) ? bundled : "ffmpeg";
+        }
+
         public static async Task Run(string args)
         {
             lastOutputFfmpeg = "";
             Process ffmpeg = OsUtils.NewProcess(true);
-            ffmpeg.StartInfo.Arguments = $"/C cd /D {Paths.binPath.Wrap()} & ffmpeg.exe -hide_banner -loglevel warning -y -stats {args}";
+            ffmpeg.StartInfo.Arguments = $"/C cd /D {Paths.binPath.Wrap()} & {GetExePath().Wrap()} -hide_banner -loglevel warning -y -stats {args}";
             Logger.Log("Running ffmpeg...");
             Logger.Log("cmd.exe " + ffmpeg.StartInfo.Arguments);
             ffmpeg.OutputDataReceived += new DataReceivedEventHandler(OutputHandler);
@@ -71,7 +83,7 @@ namespace Cupscale
         public static string RunAndGetOutput (string args)
         {
             Process ffmpeg = OsUtils.NewProcess(true);
-            ffmpeg.StartInfo.Arguments = $"/C cd /D {Paths.binPath.Wrap()} & ffmpeg.exe -hide_banner -y -stats {args}";
+            ffmpeg.StartInfo.Arguments = $"/C cd /D {Paths.binPath.Wrap()} & {GetExePath().Wrap()} -hide_banner -y -stats {args}";
             return OsUtils.RunAndGetOutput(ffmpeg);
         }
     }

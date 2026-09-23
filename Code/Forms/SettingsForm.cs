@@ -80,6 +80,7 @@ namespace Cupscale.Forms
             ConfigParser.LoadGuiElement(h265);
             ConfigParser.LoadGuiElement(gifskiQ);
             ConfigParser.LoadGuiElement(vidEnableAudio);
+            ConfigParser.LoadGuiElement(ffmpegPath);
 
             // Debug
             ConfigParser.LoadGuiElement(logIo);
@@ -151,6 +152,7 @@ namespace Cupscale.Forms
             ConfigParser.SaveGuiElement(h265);
             ConfigParser.SaveGuiElement(gifskiQ);
             ConfigParser.SaveGuiElement(vidEnableAudio);
+            ConfigParser.SaveGuiElement(ffmpegPath);
 
             // Debug
             ConfigParser.SaveGuiElement(logIo);
