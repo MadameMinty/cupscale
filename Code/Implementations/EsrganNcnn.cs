@@ -1,4 +1,4 @@
-﻿using Cupscale.Cupscale;
+using Cupscale.Cupscale;
 using Cupscale.IO;
 using Cupscale.Main;
 using Upscale = Cupscale.Main.Upscale;
@@ -33,6 +33,11 @@ namespace Cupscale.Implementations
 
             Program.mainForm.SetProgress(1f, "Converting model...");
             await NcnnUtils.ConvertNcnnModel(modelPath, "x*");
+            if (NcnnUtils.currentNcnnModel == null)
+            {
+                Program.Cancel();   // Error already shown
+                return;
+            }
             Logger.Log("[ESRGAN] NCNN Model is ready: " + NcnnUtils.currentNcnnModel);
             Program.mainForm.SetProgress(3f, "Loading ESRGAN (NCNN)...");
             int scale = await NcnnUtils.GetNcnnModelScale(NcnnUtils.currentNcnnModel);

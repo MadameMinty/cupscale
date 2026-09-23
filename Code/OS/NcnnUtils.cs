@@ -27,6 +27,8 @@ namespace Cupscale.OS
 		public static async Task ConvertNcnnModel(string modelPath, string filenamePattern)
         {
 			Logger.Log($"ConvertNcnnModel: {modelPath}");
+			currentNcnnModel = null;
+			DialogForm dialog = null;
 
             try
             {
@@ -46,13 +48,11 @@ namespace Cupscale.OS
                 if (IoUtils.GetAmountOfFiles(outPath, false) < 2)
                 {
                     Logger.Log("Running model converter...");
-                    DialogForm dialog = new DialogForm("Converting ESRGAN model to NCNN format...");
+                    dialog = new DialogForm("Converting ESRGAN model to NCNN format...");
                     await RunConverter(modelPath, outPath);
 
                     if (lastNcnnOutput.Contains("Error:"))
                         throw new Exception(lastNcnnOutput.SplitIntoLines().Where(x => x.Contains("Error:")).First());
-
-                    dialog.Close();
                 }
                 else
                 {
@@ -66,6 +66,10 @@ namespace Cupscale.OS
             {
 				Logger.ErrorMessage("Failed to convert Pytorch model to NCNN format! It might be incompatible.", e);
             }
+			finally
+			{
+				dialog?.Close();
+			}
         }
 
 		static void ApplyFilenamePattern(string path, string pattern)
