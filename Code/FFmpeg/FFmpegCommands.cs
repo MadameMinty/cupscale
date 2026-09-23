@@ -156,9 +156,10 @@ namespace Cupscale
             string tempPath = inputFile + "-temp.mp4";
             string args = $" -i {inputFile.Wrap()} -i {audioPath.Wrap()} -map 0:v -map 1:a? -c copy -strict -2 {tempPath.Wrap()}";
             await FFmpeg.Run(args);
-            if (FFmpeg.lastOutputFfmpeg.Contains("Invalid data"))
+            if (FFmpeg.lastOutputFfmpeg.Contains("Invalid data") || !File.Exists(tempPath) || new FileInfo(tempPath).Length == 0)
             {
                 Logger.Log("Failed to merge audio!");
+                IoUtils.TryDeleteIfExists(tempPath);
                 return;
             }
             File.Delete(inputFile);
