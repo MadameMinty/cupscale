@@ -118,10 +118,13 @@ namespace Cupscale.OS
             client.DownloadFileAsync(new Uri(url), downloadPath);
         }
 
-        /// <summary> Config "pythonRuntimeUrl" (full URL) overrides the default server package. </summary>
+        /// <summary>
+        /// Config "pythonRuntimeUrl" (Turing or newer, e.g. a CUDA 12.8 build) or "pythonRuntimeUrlLegacy" (older GPUs)
+        /// override the default server package.
+        /// </summary>
         static string GetRuntimeUrl()
         {
-            string custom = Config.Get("pythonRuntimeUrl");
+            string custom = Config.Get(NvApi.HasTuringOrNewer() ? "pythonRuntimeUrl" : "pythonRuntimeUrlLegacy");
 
             if (!string.IsNullOrWhiteSpace(custom))
                 return custom.Trim();

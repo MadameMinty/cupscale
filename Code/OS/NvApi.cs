@@ -52,15 +52,17 @@ namespace Cupscale.OS
 
         public static bool HasAmpereOrNewer()   // To detect if newer Pytorch version is needed
         {
-            foreach (PhysicalGPU gpu in gpuList)
-            {
-                Architecture arch = GetArch(gpu);
+            return gpuList.Any(gpu => IsAtLeast(GetArch(gpu), Architecture.Ampere));
+        }
 
-                if (arch >= Architecture.Ampere || arch == Architecture.Undetected)
-                    return true;
-            }
+        public static bool HasTuringOrNewer()   // CUDA 12.8 Pytorch builds start at Turing (sm_75)
+        {
+            return gpuList.Count == 0 || gpuList.Any(gpu => IsAtLeast(GetArch(gpu), Architecture.Turing));
+        }
 
-            return false;
+        static bool IsAtLeast(Architecture arch, Architecture min)
+        {
+            return arch >= min || arch == Architecture.Undetected;     // Unknown chips are assumed to be new
         }
 
         public static Architecture GetArch(PhysicalGPU gpu)
