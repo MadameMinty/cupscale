@@ -417,20 +417,17 @@ namespace Cupscale.Main
 			}
 
 			Program.lastImgPath = path;
-			ReloadImage(false);
-			if (failed) { FailReset(); return; }
+			if (!await ReloadImage(false)) { FailReset(); return; }
 			SetHasPreview(false);
 			ImageLoadedChanged(true);
 			SetProgress(0f, "Ready.");
 		}
 
-		public bool failed = false;
 		public void FailReset ()
         {
 			SetProgress(0f, "Reset after error.");
 			Program.CloseTempForms();
 			Program.lastImgPath = null;
-			failed = false;
         }
 
 		public void SetButtonText (string s)
@@ -447,14 +444,14 @@ namespace Cupscale.Main
 			openSourceFolderBtn.Enabled = state;
 		}
 
-		public async void ReloadImage (bool allowFail = true)	// Returns false on error
+		public async Task<bool> ReloadImage (bool allowFail = true)	// Returns false on error
         {
+			bool success = true;
 			string path = Program.lastImgPath;
 			DialogForm loadingBox = new DialogForm($"Loading {Path.GetFileName(path)}", 20);
 			await Task.Delay(10);
 			try
 			{
-				File.Copy(path, Paths.tempImgPath, true);
 				bool fillAlpha = !bool.Parse(Config.Get("alpha"));
 				await ImageProcessing.ConvertImage(path, ImageProcessing.Format.PngRaw, fillAlpha, ImageProcessing.ExtMode.UseNew, false, Paths.tempImgPath, true);
 				previewImg.Image = ImgUtils.GetImage(Paths.tempImgPath);
@@ -468,11 +465,12 @@ namespace Cupscale.Main
                 if (!allowFail)
                 {
 					Logger.ErrorMessage("Failed to load image:", e);
-					failed = true;
+					success = false;
 				}
 			}
 			if(loadingBox != null)
 				loadingBox.Close();
+			return success;
 		}
 
         private async void upscaleBtn_Click(object sender, EventArgs e)
@@ -492,8 +490,8 @@ namespace Cupscale.Main
 				return;
 			}
 
-			if (Config.GetBool("reloadImageBeforeUpscale"))
-				ReloadImage();
+			if (Config.GetBool("reloadImageBeforeUpscale") && htTabControl.SelectedIndex == 0)
+				await ReloadImage();
 
 			UpdateResizeMode();
 			Program.lastUpscaleIsVideo = htTabControl.SelectedIndex == 2;
@@ -524,7 +522,7 @@ namespace Cupscale.Main
 		private async void refreshPreviewFullBtn_Click(object sender, EventArgs e)
         {
 			if (Config.GetBool("reloadImageBeforeUpscale"))
-				ReloadImage();
+				await ReloadImage();
 			UpdateResizeMode();
 			PreviewUi.UpscalePreview(true);
 		}
@@ -754,7 +752,7 @@ namespace Cupscale.Main
         {
 			SaveEsrganOptions();
 			if(initialized && !string.IsNullOrWhiteSpace(Program.lastImgPath))
-				ReloadImage(false);
+				_ = ReloadImage(false);
 		}
 
         private void seamlessMode_SelectedIndexChanged(object sender, EventArgs e)
@@ -764,7 +762,7 @@ namespace Cupscale.Main
 
         private void reloadImgBtn_Click(object sender, EventArgs e)
         {
-			ReloadImage(false);
+			_ = ReloadImage(false);
         }
 
         private void openSourceFolderBtn_Click(object sender, EventArgs e)
