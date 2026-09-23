@@ -166,6 +166,10 @@ namespace Cupscale.Cupscale
                 try
                 {
                     string movePath = GetTmpPath(file, Paths.imgOutPath, Paths.imgInPath, File.Exists);
+
+                    if (movePath == null)   // Not an AI output (e.g. a file being post-processed)
+                        continue;
+
                     Logger.Log("[Queue] Renaming " + file + " => " + movePath);
                     IoUtils.DeleteIfExists(movePath);
                     File.Move(file, movePath);
@@ -177,14 +181,21 @@ namespace Cupscale.Cupscale
             }
         }
 
-        /// <summary> Maps AI output "{orig}.png" (or legacy "{orig}.png.png") to "{orig}.tmp", keeping subfolders. Inputs are always "{orig}.png". </summary>
+        /// <summary>
+        /// Maps AI output "{orig}.png" (or legacy "{orig}.png.png") to "{orig}.tmp", keeping subfolders. Inputs are always "{orig}.png".
+        /// Returns null if outFile has no matching input.
+        /// </summary>
         internal static string GetTmpPath(string outFile, string outRoot, string inRoot, Func<string, bool> fileExists)
         {
             string rel = outFile.Substring(outRoot.TrimEnd('\\', '/').Length).TrimStart('\\', '/');
-            bool matchesInput = fileExists(Path.Combine(inRoot, rel));
-            bool legacyDoubleExt = !matchesInput && rel.EndsWith(".png.png", StringComparison.OrdinalIgnoreCase);
-            string origRel = rel.Substring(0, rel.Length - (legacyDoubleExt ? 8 : 4));
-            return Path.Combine(outRoot, origRel + ".tmp");
+
+            if (fileExists(Path.Combine(inRoot, rel)))
+                return Path.Combine(outRoot, rel.Substring(0, rel.Length - 4) + ".tmp");
+
+            if (rel.EndsWith(".png.png", StringComparison.OrdinalIgnoreCase) && fileExists(Path.Combine(inRoot, rel.Substring(0, rel.Length - 4))))
+                return Path.Combine(outRoot, rel.Substring(0, rel.Length - 8) + ".tmp");
+
+            return null;
         }
     }
 }
