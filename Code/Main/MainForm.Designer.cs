@@ -188,7 +188,6 @@ namespace Cupscale.Main
             this.leftSpacer5 = new System.Windows.Forms.Panel();
             this.panel4 = new System.Windows.Forms.Panel();
             this.aiPanel = new System.Windows.Forms.Panel();
-            this.label32 = new System.Windows.Forms.Label();
             this.label33 = new System.Windows.Forms.Label();
             this.aiSelect = new System.Windows.Forms.ComboBox();
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
@@ -2575,31 +2574,19 @@ namespace Cupscale.Main
             // 
             this.aiPanel.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
             this.aiPanel.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.aiPanel.Controls.Add(this.label32);
             this.aiPanel.Controls.Add(this.label33);
             this.aiPanel.Controls.Add(this.aiSelect);
             this.aiPanel.Location = new System.Drawing.Point(4, -2);
             this.aiPanel.Margin = new System.Windows.Forms.Padding(4);
             this.aiPanel.Name = "aiPanel";
-            this.aiPanel.Size = new System.Drawing.Size(481, 64);
+            this.aiPanel.Size = new System.Drawing.Size(481, 46);
             this.aiPanel.TabIndex = 12;
-            // 
-            // label32
-            // 
-            this.label32.AutoSize = true;
-            this.label32.ForeColor = System.Drawing.Color.White;
-            this.label32.Location = new System.Drawing.Point(4, 5);
-            this.label32.Margin = new System.Windows.Forms.Padding(4, 0, 4, 7);
-            this.label32.Name = "label32";
-            this.label32.Size = new System.Drawing.Size(19, 16);
-            this.label32.TabIndex = 2;
-            this.label32.Text = "AI";
             // 
             // label33
             // 
             this.label33.AutoSize = true;
             this.label33.ForeColor = System.Drawing.Color.White;
-            this.label33.Location = new System.Drawing.Point(7, 28);
+            this.label33.Location = new System.Drawing.Point(7, 14);
             this.label33.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label33.Name = "label33";
             this.label33.Size = new System.Drawing.Size(118, 16);
@@ -2615,7 +2602,7 @@ namespace Cupscale.Main
             this.aiSelect.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.aiSelect.ForeColor = System.Drawing.Color.White;
             this.aiSelect.FormattingEnabled = true;
-            this.aiSelect.Location = new System.Drawing.Point(155, 25);
+            this.aiSelect.Location = new System.Drawing.Point(155, 10);
             this.aiSelect.Margin = new System.Windows.Forms.Padding(11, 10, 11, 10);
             this.aiSelect.Name = "aiSelect";
             this.aiSelect.Size = new System.Drawing.Size(312, 24);
@@ -2850,7 +2837,6 @@ namespace Cupscale.Main
         private ComboBox batchCacheSplitDepth;
         private HTAlt.WinForms.HTButton discordBtn;
         private Panel aiPanel;
-        private Label label32;
         private Label label33;
         private ComboBox aiSelect;
         private Panel leftSpacer5;
