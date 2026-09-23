@@ -636,7 +636,7 @@
             this.label50.Name = "label50";
             this.label50.Size = new System.Drawing.Size(117, 20);
             this.label50.TabIndex = 40;
-            this.label50.Text = "Multi-GPU (WIP)";
+            this.label50.Text = "Multi-GPU (experimental)";
             // 
             // esrganPytorchSeamlessMode
             // 
