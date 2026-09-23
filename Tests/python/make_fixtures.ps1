@@ -17,7 +17,6 @@ function Img($spec, $path) { & magick @spec $path; if ($LASTEXITCODE -ne 0) { th
 Img @("-size", "96x64", "gradient:red-blue") (Join-Path $fx "batch\a\same.png")
 Img @("-size", "96x64", "gradient:green-yellow") (Join-Path $fx "batch\b\same.png")
 Img @("-size", "96x64", "plasma:", "-seed", "1") (Join-Path $fx "batch\photo.jpg")
-Img @("-size", "96x64", "gradient:white-black") (Join-Path $fx "batch\photo.png")
 Img @("-size", "80x80", "pattern:checkerboard") (Join-Path $fx "batch\r2image.200.png")
 Img @("-size", "80x60", "gradient:orange-purple") (Join-Path $fx "batch\zażółć ñ.png")
 Img @("-size", "64x64", "xc:none", "-fill", "#ff000080", "-draw", "circle 32,32 32,4") (Join-Path $fx "batch\alpha.png")
