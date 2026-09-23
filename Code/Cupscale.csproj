@@ -14,6 +14,7 @@
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <ApplicationIcon>CupscaleLogo1.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <MagickCopyNativeWindows>false</MagickCopyNativeWindows>
   </PropertyGroup>
   <ItemGroup>
     <None Remove="Costura64\DdsFileTypePlusIO_x64.dll" />
@@ -22,6 +23,7 @@
     <EmbeddedResource Include="Costura64\DdsFileTypePlusIO_x64.dll">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </EmbeddedResource>
+    <EmbeddedResource Include="$(PkgMagick_NET-Q16-x64)\runtimes\win-x64\native\Magick.Native-Q16-x64.dll" Link="Costura64\Magick.Native-Q16-x64.dll" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="7z.NET" Version="1.0.3" />
@@ -34,18 +36,16 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="HTAlt.WinForms" Version="0.1.6" />
-    <PackageReference Include="Magick.NET-Q16-AnyCPU" Version="7.23.1" />
+    <PackageReference Include="Magick.NET-Q16-x64" Version="14.17.1" GeneratePathProperty="true" />
     <PackageReference Include="MozJpegSharp" Version="1.0.27" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="NvAPIWrapper.Net" Version="0.8.1.101" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="Magick.NET-Q16-AnyCPU" />
     <Reference Include="Cyotek.Windows.Forms.ImageBox" />
     <Reference Include="System.Management" />
     <Reference Include="TabControl" />
     <Reference Include="PagedControl" />
-    <Reference Include="Magick.NET.Core" />
     <Reference Include="System.Core" />
     <Reference Include="System.IO.Compression.FileSystem" />
   </ItemGroup>

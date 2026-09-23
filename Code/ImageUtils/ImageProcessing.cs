@@ -175,13 +175,13 @@ namespace Cupscale
                 else
                 {
                     img.Format = MagickFormat.Jpeg;
-                    img.Quality = jpegQ;
+                    img.Quality = (uint)jpegQ;
                 }
             }
             if (format == Format.Weppy)
             {
                 img.Format = MagickFormat.WebP;
-                img.Quality = Config.GetInt("webpQ");
+                img.Quality = (uint)Config.GetInt("webpQ");
                 if (img.Quality >= 100)
                     img.Settings.SetDefine(MagickFormat.WebP, "lossless", true);
                 newExt = "webp";
@@ -316,14 +316,14 @@ namespace Cupscale
                 else
                 {
                     img.Format = MagickFormat.Jpeg;
-                    img.Quality = q;
+                    img.Quality = (uint)q;
                 }
             }
 
             if (format == Format.Weppy)
             {
                 img.Format = MagickFormat.WebP;
-                img.Quality = Config.GetInt("webpQ");
+                img.Quality = (uint)Config.GetInt("webpQ");
                 if(img.Quality >= 100)
                     img.Settings.SetDefine(MagickFormat.WebP, "lossless", true);
                 newExt = "webp";

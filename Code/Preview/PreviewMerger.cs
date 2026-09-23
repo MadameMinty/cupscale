@@ -70,9 +70,9 @@ namespace Cupscale
 
                 using (MagickImage scaledSourceMagickImg = new MagickImage(Paths.tempImgPath))
                 {
-                    oldWidth = scaledSourceMagickImg.Width;
+                    oldWidth = (int)scaledSourceMagickImg.Width;
                     ImageProcessing.ResizeImagePre(scaledSourceMagickImg);
-                    newWidth = scaledSourceMagickImg.Width;
+                    newWidth = (int)scaledSourceMagickImg.Width;
                     scaledSourceMagickImg.Quality = 0;  // Temp file: no compression
                     scaledSourceMagickImg.Write(tempScaledSourceImagePath);
                 }

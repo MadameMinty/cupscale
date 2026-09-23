@@ -353,15 +353,15 @@ namespace Cupscale.UI
                 try
                 {
                     var info = new MagickImageInfo(path);   // Header only
-                    width = info.Width;
-                    height = info.Height;
+                    width = (int)info.Width;
+                    height = (int)info.Height;
                 }
                 catch (MagickException)     // e.g. DDS variants only DdsFileTypePlus can read
                 {
                     using (MagickImage img = ImgUtils.GetMagickImage(path))
                     {
-                        width = img.Width;
-                        height = img.Height;
+                        width = (int)img.Width;
+                        height = (int)img.Height;
                     }
                 }
 
