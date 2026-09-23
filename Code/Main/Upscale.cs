@@ -24,7 +24,7 @@ namespace Cupscale.Main
 
         public enum UpscaleMode { Preview, Single, Batch, Composition }
         public static UpscaleMode currentMode = UpscaleMode.Preview;
-        public enum ImgExportMode { PNG, SameAsSource, JPEG, WEBP, BMP, TGA, DDS, GIF }
+        public enum ImgExportMode { PNG, SameAsSource, JPEG, WEBP, JXL, BMP, TGA, DDS, GIF }
         public enum VidExportMode { MP4, GIF, SameAsSource }
         public enum ScaleMode { Percent, PixelsHeight, PixelsWidth, PixelsShorterSide, PixelsLongerSide }
         public enum Overwrite { No, Yes, }

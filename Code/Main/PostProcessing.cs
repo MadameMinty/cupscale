@@ -74,6 +74,7 @@ namespace Cupscale.Main
         {
             if (format == Upscale.ImgExportMode.JPEG.ToStringTitleCase()) return ImageProcessing.Format.Jpeg;
             if (format == Upscale.ImgExportMode.WEBP.ToStringTitleCase()) return ImageProcessing.Format.Weppy;
+            if (format == Upscale.ImgExportMode.JXL.ToStringTitleCase()) return ImageProcessing.Format.Jxl;
             if (format == Upscale.ImgExportMode.BMP.ToStringTitleCase()) return ImageProcessing.Format.BMP;
             if (format == Upscale.ImgExportMode.TGA.ToStringTitleCase()) return ImageProcessing.Format.TGA;
             if (format == Upscale.ImgExportMode.GIF.ToStringTitleCase()) return ImageProcessing.Format.GIF;

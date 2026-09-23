@@ -19,6 +19,7 @@ Inputs: `__fixtures__` (run `make_fixtures.ps1`). Outputs: `__outputs__\<scenari
 | preview | Same image: Refresh preview (cutout), Full image, clipboard comparison, Save merged preview | Previews render, no errors |
 | `video-mp4` | Video tab, drop `__fixtures__\video\clip.mp4`, output `__outputs__\video-mp4`, format MP4 | 640×360, 29.97 fps exact, audio kept, 3 s |
 | `video-mkv` | Drop `clip.mkv`, format Same as source, output `__outputs__\video-mkv` | Falls back to MP4 with a log line, no crash |
+| JXL out | Batch, format JXL, quality 90, then again with Lossless ticked, output `__outputs__\batch-jxl` / `batch-jxl-lossless` | `.jxl` files; lossless ones larger. Also run `batch-png` with Pre-Processing disabled: `jpegxl.jxl` (and `.tga`) still upscale |
 | DDS out | Batch, format DDS, output `__outputs__\batch-dds` | `.dds` files, no `.tga` |
 | close | Start a batch, close Cupscale | No python/ffmpeg/ncnn processes left in Task Manager |
 

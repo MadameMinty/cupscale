@@ -253,6 +253,7 @@ namespace Cupscale
             if (key == "jpegQ") return WriteDefault(key, "95");
             if (key == "useMozJpeg") return WriteDefault(key, "True");
             if (key == "webpQ") return WriteDefault(key, "95");
+            if (key == "jxlQ") return WriteDefault(key, "90");
             if (key == "dxtMode") return WriteDefault(key, "BC1 (DXT1)");
             if (key == "ddsEnableMips") return WriteDefault(key, "True");
             if (key == "flipTga") return WriteDefault(key, "True");

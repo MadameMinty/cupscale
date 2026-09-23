@@ -179,7 +179,10 @@ namespace Cupscale.UI
             if (preprocess)
                 await ImageProcessing.PreProcessImages(Paths.imgInPath, !bool.Parse(Config.Get("alpha")));
             else
+            {
+                await ImageProcessing.ConvertAiIncompatibleImages(Paths.imgInPath);
                 IoUtils.AppendToFilenames(Paths.imgInPath, ".png");
+            }
 
             ModelData mdl = Upscale.GetModelData();
             GetProgress(Paths.imgOutPath, IoUtils.GetAmountOfFiles(Paths.imgInPath, true));

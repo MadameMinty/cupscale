@@ -25,6 +25,7 @@ Img @("-size", "64x64", "plasma:", "-colors", "16", "-type", "Palette") (Join-Pa
 Img @("-size", "64x48", "gradient:cyan-magenta") (Join-Path $fx "batch\webp.webp")
 Img @("-size", "64x48", "gradient:navy-gold") (Join-Path $fx "batch\bitmap.bmp")
 Img @("-size", "64x48", "gradient:teal-pink") (Join-Path $fx "batch\targa.tga")
+Img @("-size", "64x48", "gradient:lime-navy") (Join-Path $fx "batch\jpegxl.jxl")
 Img @("-size", "64x64", "gradient:red-lime", "-define", "dds:compression=dxt1") (Join-Path $fx "batch\texture.dds")
 
 # Single image

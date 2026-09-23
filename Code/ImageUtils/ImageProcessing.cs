@@ -16,7 +16,7 @@ namespace Cupscale
 {
     internal class ImageProcessing
     {
-        public enum Format { Source, Png50, PngFast, PngRaw, Jpeg, Weppy, BMP, TGA, DDS, GIF }
+        public enum Format { Source, Png50, PngFast, PngRaw, Jpeg, Weppy, Jxl, BMP, TGA, DDS, GIF }
 
         public static Filters.Filter postFilter = Filters.lanczos;
         public static Upscale.ScaleMode postScaleMode = Upscale.ScaleMode.Percent;
@@ -37,6 +37,9 @@ namespace Cupscale
 
             if (GetTrimmedExtension(file) == "jpg" || GetTrimmedExtension(file) == "jpeg")
                 format = Format.Jpeg;
+
+            if (GetTrimmedExtension(file) == "jxl")
+                format = Format.Jxl;
 
             if (GetTrimmedExtension(file) == "webp")
                 format = Format.Weppy;
@@ -186,6 +189,11 @@ namespace Cupscale
                     img.Settings.SetDefine(MagickFormat.WebP, "lossless", true);
                 newExt = "webp";
             }
+            if (format == Format.Jxl)
+            {
+                ApplyJxlSettings(img);
+                newExt = "jxl";
+            }
             if (format == Format.BMP)
             {
                 img.Format = MagickFormat.Bmp;
@@ -329,6 +337,12 @@ namespace Cupscale
                 newExt = "webp";
             }
 
+            if (format == Format.Jxl)
+            {
+                ApplyJxlSettings(img);
+                newExt = "jxl";
+            }
+
             if (format == Format.BMP)
             {
                 img.Format = MagickFormat.Bmp;
@@ -404,6 +418,38 @@ namespace Cupscale
             }
 
             return outPath;
+        }
+
+        /// <summary> JPEG XL: quality 100 is lossless in ImageMagick's encoder. </summary>
+        internal static void ApplyJxlSettings(MagickImage img)
+        {
+            img.Format = MagickFormat.Jxl;
+            img.Quality = Config.GetBool("jxlLossless") ? 100u : (uint)Math.Max(1, Math.Min(99, Config.GetInt("jxlQ")));
+        }
+
+        /// <summary> Formats the AI backends decode themselves; others are converted to PNG even with pre-processing disabled. </summary>
+        static readonly string[] aiReadableExtensions = { ".png", ".jpg", ".jpeg", ".bmp", ".webp" };
+
+        /// <summary> Rewrites files the AI can't decode as PNG in place (name kept, so "Same as source" still works). No resize or alpha fill. </summary>
+        public static async Task ConvertAiIncompatibleImages(string dir)
+        {
+            FileInfo[] files = new DirectoryInfo(dir).GetFiles("*", SearchOption.AllDirectories)
+                .Where(f => !aiReadableExtensions.Contains(f.Extension.ToLowerInvariant())).ToArray();
+
+            await Task.Run(() => Parallel.ForEach(files, new ParallelOptions { MaxDegreeOfParallelism = Math.Max(1, Environment.ProcessorCount / 2) }, file =>
+            {
+                using (MagickImage img = ImgUtils.GetMagickImage(file.FullName, true))
+                {
+                    if (img == null)
+                        return;
+
+                    img.Format = MagickFormat.Png32;
+                    img.Quality = 10;
+                    img.Write(file.FullName);
+                }
+
+                Logger.Log($"[ImgProc] Converted {file.Name} to PNG for the AI");
+            }));
         }
 
         public static MagickImage ResizeImagePre(MagickImage img)

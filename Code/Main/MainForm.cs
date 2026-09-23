@@ -606,6 +606,14 @@ namespace Cupscale.Main
 				return null;
 			if (imageOutputFormat.Text == Upscale.ImgExportMode.JPEG.ToStringTitleCase()) return "jpegQ";
 			if (imageOutputFormat.Text == Upscale.ImgExportMode.WEBP.ToStringTitleCase()) return "webpQ";
+			if (imageOutputFormat.Text == Upscale.ImgExportMode.JXL.ToStringTitleCase()) return "jxlQ";
+			return null;
+		}
+
+		static string GetLosslessKey (string qualityKey)
+        {
+			if (qualityKey == "webpQ") return "webpLossless";
+			if (qualityKey == "jxlQ") return "jxlLossless";
 			return null;
 		}
 
@@ -615,9 +623,10 @@ namespace Cupscale.Main
 			string key = GetQualityKey();
 			outputQuality.Enabled = key != null;
 			outputQualityLabel.ForeColor = key != null ? Color.White : Color.Gray;
-			webpLossless.Enabled = key == "webpQ";
+			string losslessKey = GetLosslessKey(key);
+			webpLossless.Enabled = losslessKey != null;
 			loadingQuality = true;
-			webpLossless.Checked = Config.GetBool("webpLossless");
+			webpLossless.Checked = losslessKey != null && Config.GetBool(losslessKey);
 			loadingQuality = false;
 
 			if (key == null)
@@ -626,7 +635,7 @@ namespace Cupscale.Main
 				return;
 			}
 
-			outputQualityLabel.Text = key == "jpegQ" ? "JPEG Quality:" : "WebP Quality:";
+			outputQualityLabel.Text = key == "jpegQ" ? "JPEG Quality:" : key == "jxlQ" ? "JXL Quality:" : "WebP Quality:";
 			loadingQuality = true;
 			outputQuality.Value = Math.Max(outputQuality.Minimum, Math.Min(outputQuality.Maximum, Config.GetInt(key)));
 			loadingQuality = false;
@@ -647,8 +656,10 @@ namespace Cupscale.Main
 
 		private void webpLossless_CheckedChanged(object sender, EventArgs e)
         {
-			if (!loadingQuality)
-				Config.Set("webpLossless", webpLossless.Checked.ToString());
+			string losslessKey = GetLosslessKey(GetQualityKey());
+
+			if (!loadingQuality && losslessKey != null)
+				Config.Set(losslessKey, webpLossless.Checked.ToString());
         }
 
         private void postResizeMode_SelectedIndexChanged(object sender, EventArgs e)
