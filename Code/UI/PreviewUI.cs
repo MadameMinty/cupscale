@@ -5,7 +5,7 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.IO;
 using System.Linq;
-using System.Net;
+using System.Net.Http;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Cupscale.Data;
@@ -390,8 +390,8 @@ namespace Cupscale.UI
             try
             {
                 string url = $"https://raw.githubusercontent.com/n00mkrad/flowframes/main/patrons.csv";
-                var client = new WebClient();
-                var csvData = await client.DownloadStringTaskAsync(new Uri(url));
+                using var client = new HttpClient();
+                string csvData = await client.GetStringAsync(url);
                 patronsLabel.Text = ParsePatreonCsv(csvData);
             }
             catch (Exception e)

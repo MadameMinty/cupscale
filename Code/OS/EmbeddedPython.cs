@@ -4,11 +4,9 @@ using Cupscale.Main;
 using Cupscale.UI;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
@@ -110,35 +108,16 @@ namespace Cupscale.OS
             Logger.Log($"Downloading embedded Python from '{url}'");
 
             Print("Downloading compressed python runtime...");
-            var client = new WebClient();
-            client.DownloadProgressChanged += DownloadProgressChanged;
-            client.DownloadFileCompleted += DoneDownloading;
-            client.DownloadFileAsync(new Uri(url), downloadPath);
-        }
+            lastProgress = null;
 
-        /// <summary>
-        /// Config "pythonRuntimeUrl" (Turing or newer, e.g. a CUDA 12.8 build) or "pythonRuntimeUrlLegacy" (older GPUs)
-        /// override the default server package.
-        /// </summary>
-        static string GetRuntimeUrl()
-        {
-            string custom = Config.Get(NvApi.HasTuringOrNewer() ? "pythonRuntimeUrl" : "pythonRuntimeUrlLegacy");
-
-            if (!string.IsNullOrWhiteSpace(custom))
-                return custom.Trim();
-
-            string srv = Servers.closestServer.GetUrl();
-            return Path.Combine(srv, NvApi.HasAmpereOrNewer() ? Paths.pythonAmperePath : Paths.pythonTuringPath).Replace("\\", "/");
-        }
-
-        static async void DoneDownloading (object sender, AsyncCompletedEventArgs e)
-        {
-            ((WebClient)sender).Dispose();
-
-            if (e.Cancelled || e.Error != null)
+            try
             {
-                Print($"Download failed: {e.Error?.Message ?? "Cancelled"}");
-                Logger.Log($"Embedded Python download failed: {e.Error}");
+                await IoUtils.DownloadFileAsync(url, downloadPath, DownloadProgressChanged);
+            }
+            catch (Exception e)
+            {
+                Print($"Download failed: {e.Message}");
+                Logger.Log($"Embedded Python download failed: {e}");
                 IoUtils.TryDeleteIfExists(downloadPath);
                 runBtn.Enabled = true;
                 return;
@@ -158,6 +137,21 @@ namespace Cupscale.OS
                 isExtracting = false;
                 runBtn.Enabled = true;
             }
+        }
+
+        /// <summary>
+        /// Config "pythonRuntimeUrl" (Turing or newer, e.g. a CUDA 12.8 build) or "pythonRuntimeUrlLegacy" (older GPUs)
+        /// override the default server package.
+        /// </summary>
+        static string GetRuntimeUrl()
+        {
+            string custom = Config.Get(NvApi.HasTuringOrNewer() ? "pythonRuntimeUrl" : "pythonRuntimeUrlLegacy");
+
+            if (!string.IsNullOrWhiteSpace(custom))
+                return custom.Trim();
+
+            string srv = Servers.closestServer.GetUrl();
+            return Path.Combine(srv, NvApi.HasAmpereOrNewer() ? Paths.pythonAmperePath : Paths.pythonTuringPath).Replace("\\", "/");
         }
 
         static async Task Install ()
@@ -210,14 +204,14 @@ namespace Cupscale.OS
             });
         }
 
-        static int lastPercentage = 0;
-        static void DownloadProgressChanged(object sender, DownloadProgressChangedEventArgs e)
+        static string lastProgress;
+        static void DownloadProgressChanged(long done, long total)
         {
-            int diff = Math.Abs(lastPercentage - e.ProgressPercentage);
-            if(diff >= 1)
+            string progress = total > 0 ? $"{done * 100 / total}%" : $"{done / 1024 / 1024} MB";   // MB if the size is unknown
+            if (progress != lastProgress)
             {
-                lastPercentage = e.ProgressPercentage;
-                Print("Downloading compressed python runtime - " + e.ProgressPercentage + "%", true);
+                lastProgress = progress;
+                Print("Downloading compressed python runtime - " + progress, true);
             }
         }
 

@@ -5,7 +5,6 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Net.Http;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -81,28 +80,8 @@ namespace Cupscale
 
             try
             {
-                using (HttpClient client = new HttpClient())
-                using (HttpResponseMessage response = await client.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead))
-                {
-                    response.EnsureSuccessStatusCode();
-                    long total = response.Content.Headers.ContentLength ?? -1;
-
-                    using (Stream src = await response.Content.ReadAsStreamAsync())
-                    using (FileStream dst = File.Create(archive))
-                    {
-                        byte[] buffer = new byte[1 << 16];
-                        long done = 0;
-                        int read;
-
-                        while ((read = await src.ReadAsync(buffer, 0, buffer.Length)) > 0)
-                        {
-                            await dst.WriteAsync(buffer, 0, read);
-                            done += read;
-                            float percent = total > 0 ? done * 100f / total : -1f;
-                            Program.mainForm.SetProgress(percent, $"Downloading FFmpeg... {done / 1024 / 1024} MB");
-                        }
-                    }
-                }
+                await IoUtils.DownloadFileAsync(downloadUrl, archive, (done, total) =>
+                    Program.mainForm.SetProgress(total > 0 ? done * 100f / total : -1f, $"Downloading FFmpeg... {done / 1024 / 1024} MB"));
 
                 Program.mainForm.SetProgress(100, "Extracting FFmpeg...");
                 await Task.Run(() => SevenZip.ExtractFile(archive, "ffmpeg.exe", tmpDir));
