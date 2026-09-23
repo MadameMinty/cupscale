@@ -182,7 +182,7 @@ namespace Cupscale
             {
                 img.Format = MagickFormat.WebP;
                 img.Quality = (uint)Config.GetInt("webpQ");
-                if (img.Quality >= 100)
+                if (Config.GetBool("webpLossless") || img.Quality >= 100)
                     img.Settings.SetDefine(MagickFormat.WebP, "lossless", true);
                 newExt = "webp";
             }
@@ -324,7 +324,7 @@ namespace Cupscale
             {
                 img.Format = MagickFormat.WebP;
                 img.Quality = (uint)Config.GetInt("webpQ");
-                if(img.Quality >= 100)
+                if (Config.GetBool("webpLossless") || img.Quality >= 100)
                     img.Settings.SetDefine(MagickFormat.WebP, "lossless", true);
                 newExt = "webp";
             }

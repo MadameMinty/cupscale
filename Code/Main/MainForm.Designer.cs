@@ -99,6 +99,7 @@ namespace Cupscale.Main
             this.settingsBtn = new HTAlt.WinForms.HTButton();
             this.vramLabel = new System.Windows.Forms.Label();
             this.outputQuality = new System.Windows.Forms.NumericUpDown();
+            this.webpLossless = new System.Windows.Forms.CheckBox();
             this.outputQualityLabel = new System.Windows.Forms.Label();
             this.flowPanelRight = new System.Windows.Forms.FlowLayoutPanel();
             this.upscalePanel = new System.Windows.Forms.Panel();
@@ -1413,6 +1414,7 @@ namespace Cupscale.Main
             this.savePanel.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.savePanel.Controls.Add(this.videoOutputFormat);
             this.savePanel.Controls.Add(this.outputQuality);
+            this.savePanel.Controls.Add(this.webpLossless);
             this.savePanel.Controls.Add(this.outputQualityLabel);
             this.savePanel.Controls.Add(this.label10);
             this.savePanel.Controls.Add(this.label23);
@@ -1528,6 +1530,19 @@ namespace Cupscale.Main
             this.outputQuality.TabIndex = 8;
             this.outputQuality.Enabled = false;
             this.outputQuality.ValueChanged += new System.EventHandler(this.outputQuality_ValueChanged);
+            // 
+            // webpLossless
+            // 
+            this.webpLossless.AutoSize = true;
+            this.webpLossless.Enabled = false;
+            this.webpLossless.ForeColor = System.Drawing.Color.White;
+            this.webpLossless.Location = new System.Drawing.Point(215, 151);
+            this.webpLossless.Name = "webpLossless";
+            this.webpLossless.Size = new System.Drawing.Size(80, 20);
+            this.webpLossless.TabIndex = 9;
+            this.webpLossless.Text = "Lossless";
+            this.webpLossless.UseVisualStyleBackColor = true;
+            this.webpLossless.CheckedChanged += new System.EventHandler(this.webpLossless_CheckedChanged);
             //
             // label11
             // 
@@ -2782,6 +2797,7 @@ namespace Cupscale.Main
         private ComboBox preResizeFilter;
         private Label vramLabel;
         private NumericUpDown outputQuality;
+        private CheckBox webpLossless;
         private Label outputQualityLabel;
         private RadioButton advancedBtn;
         private Button advancedConfigureBtn;

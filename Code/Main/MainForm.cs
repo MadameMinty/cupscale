@@ -615,6 +615,10 @@ namespace Cupscale.Main
 			string key = GetQualityKey();
 			outputQuality.Enabled = key != null;
 			outputQualityLabel.ForeColor = key != null ? Color.White : Color.Gray;
+			webpLossless.Enabled = key == "webpQ";
+			loadingQuality = true;
+			webpLossless.Checked = Config.GetBool("webpLossless");
+			loadingQuality = false;
 
 			if (key == null)
 			{
@@ -639,6 +643,12 @@ namespace Cupscale.Main
 
 			if (!loadingQuality && key != null)
 				Config.Set(key, ((int)outputQuality.Value).ToString());
+        }
+
+		private void webpLossless_CheckedChanged(object sender, EventArgs e)
+        {
+			if (!loadingQuality)
+				Config.Set("webpLossless", webpLossless.Checked.ToString());
         }
 
         private void postResizeMode_SelectedIndexChanged(object sender, EventArgs e)
