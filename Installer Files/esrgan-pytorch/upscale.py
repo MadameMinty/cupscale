@@ -202,7 +202,7 @@ class Upscale:
                 # Load the model so we can access the scale
                 self.load_model(model_path)
 
-                if self.cache_max_split_depth and len(split_depths.keys()) > 0:
+                if self.cache_max_split_depth and i in split_depths:
                     rlt, depth, _ = ops.auto_split_upscale(
                         img,
                         self.upscale,
