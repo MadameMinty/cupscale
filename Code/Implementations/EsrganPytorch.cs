@@ -57,7 +57,7 @@ namespace Cupscale.Implementations
             string cache = cacheSplitDepth ? "--cache_max_split_depth" : "";
             string opt = stayOpen ? "/K" : "/C";
             string cmd = $"{opt} cd /D {Path.Combine(Paths.binPath, Imps.esrganPytorch.dir).Wrap()} & ";
-            cmd += $"{EmbeddedPython.GetPyCmd()} upscale.py --input {inpath} --output {outpath} {cache} {cpu} {device} {fp16} {seam} {alphaMode} {alphaDepth} {modelArg}";
+            cmd += $"{EmbeddedPython.GetPyCmd()} -u upscale.py --input {inpath} --output {outpath} {cache} {cpu} {device} {fp16} {seam} {alphaMode} {alphaDepth} {modelArg}";
             Logger.Log("[CMD] " + cmd);
             Process proc = OsUtils.NewProcess(!showWindow);
             proc.StartInfo.Arguments = cmd;
@@ -139,7 +139,7 @@ namespace Cupscale.Implementations
             outPath = Path.Combine(outPath, filename);
 
             string cmd = $"{opt} cd /D {Paths.GetAiDir(Imps.esrganPytorch).Wrap()} & ";
-            cmd += $"{EmbeddedPython.GetPyCmd()} interp.py {mdl.model1Path.Wrap()} {mdl.model2Path.Wrap()} {alphaStr} {outPath.Wrap()}";
+            cmd += $"{EmbeddedPython.GetPyCmd()} -u interp.py {mdl.model1Path.Wrap()} {mdl.model2Path.Wrap()} {alphaStr} {outPath.Wrap()}";
 
             proc.StartInfo.Arguments = cmd;
             Logger.Log("[ESRGAN Interp] CMD: " + proc.StartInfo.Arguments);
