@@ -20,7 +20,7 @@ namespace Cupscale.ImageUtils
         public static Image GetImage(string path)
         {
             if (Logger.doLogIo) Logger.Log("[ImgUtils] Reading Image from " + path);
-            using MemoryStream stream = new MemoryStream(File.ReadAllBytes(path));
+            MemoryStream stream = new MemoryStream(File.ReadAllBytes(path));     // GDI+ needs the stream for the image's lifetime; no file lock
             Image img = Image.FromStream(stream);
             if (Logger.doLogIo) Logger.Log("[OK]", true, true);
             return img;
