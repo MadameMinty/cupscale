@@ -4,15 +4,18 @@ Builds the embedded Python runtime package (py.7z) used by the ESRGAN (PyTorch) 
 Output: <OutDir>\py.7z containing a top-level "py" folder with a relocatable CPython,
 torch (CUDA wheel), OpenCV, NumPy and the ONNX packages needed by pth2ncnn.
 
-Install it by hosting py.7z and setting "pythonRuntimeUrl" in config.json to its URL,
-or by extracting it into CupscaleData\bin (so that bin\py\python.exe exists).
+Install it by hosting py.7z and setting "pythonRuntimeUrl" (Turing or newer) or
+"pythonRuntimeUrlLegacy" (older GPUs) in config.json to its URL, or by extracting it into
+CupscaleData\bin (so that bin\py\python.exe exists).
+
+CUDA builds: cu128 covers sm_75 (RTX 20) .. sm_120 (RTX 50). For GTX 900/10 use -Cuda cu126.
 
 Requires: uv, 7-Zip (7z.exe/7za.exe in PATH, or the bundled Code\Resources\7za.exe).
 #>
 param(
     [string]$OutDir = (Join-Path $PSScriptRoot "..\build\python-runtime"),
     [string]$PythonVersion = "3.12",
-    [string]$Cuda = "cu128",        # cu128: sm_50 (GTX 900) .. sm_120 (RTX 50)
+    [string]$Cuda = "cu128",
     [string]$TorchVersion = ""      # e.g. "2.8.0"; empty = latest for the CUDA index
 )
 
