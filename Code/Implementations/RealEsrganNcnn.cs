@@ -80,11 +80,7 @@ namespace Cupscale.Implementations
                 await Task.Delay(50);
 
             if (Upscale.currentMode == Upscale.UpscaleMode.Batch)
-            {
-                await Task.Delay(1000);
                 Program.mainForm.SetProgress(100f, "Post-Processing...");
-                PostProcessingQueue.Stop();
-            }
 
         }
 

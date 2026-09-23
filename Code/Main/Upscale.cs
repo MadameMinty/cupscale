@@ -1,4 +1,5 @@
-﻿using Cupscale.Data;
+﻿using Cupscale.Cupscale;
+using Cupscale.Data;
 using Cupscale.ImageUtils;
 using Cupscale.Implementations;
 using Cupscale.IO;
@@ -86,7 +87,11 @@ namespace Cupscale.Main
 
                 Logger.Log("[ESRGAN] Upscaling Error: " + e.Message + "\n" + e.StackTrace);
             }
-
+            finally
+            {
+                if (currentMode == UpscaleMode.Batch)
+                    PostProcessingQueue.Stop();
+            }
         }
 
         public static async Task CopyImagesTo(string path)

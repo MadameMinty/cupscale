@@ -430,16 +430,21 @@ namespace Cupscale
 
         public static bool IsFileLocked(string path)
         {
+            if (!File.Exists(path))
+                return false;
+
             try
             {
-                string newPath = path + ".locktest.tmp";
-                File.Move(path, newPath);
-                File.Move(newPath, path);
+                using (new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.None)) { }
                 return false;
             }
-            catch (Exception e)
+            catch (IOException)
             {
-                return true;
+                return File.Exists(path);   // Sharing violation, unless it was just moved away
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return false;
             }
         }
 

@@ -44,14 +44,14 @@ namespace Cupscale.Cupscale
 
         public static async Task Update ()
         {
-            while (run || AnyFilesLeft())
+            while (!Program.canceled && (run || AnyFilesLeft()))
             {
                 CheckNcnnOutput();
                 string[] outFiles = Directory.GetFiles(Paths.imgOutPath, "*.tmp", SearchOption.AllDirectories);
 
                 foreach (string file in outFiles)
                 {
-                    if (!outputFileQueue.Contains(file) && !processedFiles.Contains(file) && !outputFiles.Contains(file))
+                    if (!outputFileQueue.Contains(file) && !processedFiles.Contains(file) && !outputFiles.Contains(file) && !IoUtils.IsFileLocked(file))
                     {
                         //processedFiles.Add(file);
                         outputFileQueue.Enqueue(file);
@@ -82,22 +82,27 @@ namespace Cupscale.Cupscale
                 if (outputFileQueue.Count > 0)
                 {
                     string file = outputFileQueue.Dequeue();
+                    processedFiles.Add(file);
                     Logger.Log("[Queue] Post-Processing " + Path.GetFileName(file));
                     sw.Restart();
+                    lastOutfile = null;
                     await PostProcessing.PostprocessingSingle(file, false);
 
-                    while (IoUtils.IsFileLocked(lastOutfile))
+                    for (int retries = 20; retries > 0 && IoUtils.IsFileLocked(lastOutfile); retries--)
                     {
-                        Logger.Log($"{file} appears to be locked - waiting 500ms...");
+                        Logger.Log($"{lastOutfile} appears to be locked - waiting 500ms...");
                         await Task.Delay(500);
                     }
 
-                    string outFilename = Upscale.FilenamePostprocess(lastOutfile);
+                    string outFilename = IoUtils.IsFileValid(lastOutfile) ? Upscale.FilenamePostprocess(lastOutfile) : null;
 
-                    if(outFilename == null)
+                    if (outFilename == null)
                     {
-                        Logger.Log($"[Queue] Error: Upscale.FilenamePostprocess({lastOutfile}) returned null!");
-                        return;
+                        Logger.Log($"[Queue] Error: Post-processing {Path.GetFileName(file)} failed, skipping.");
+                        IoUtils.TryDeleteIfExists(file);
+                        IoUtils.TryDeleteIfExists(lastOutfile);
+                        BatchUpscaleUI.upscaledImages++;
+                        continue;
                     }
 
                     outputFiles.Add(outFilename);
