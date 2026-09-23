@@ -1052,7 +1052,7 @@ namespace Cupscale.Main
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(485, 41);
             this.label5.TabIndex = 1;
-            this.label5.Text = "Cupscale 420.69 Rev3 - Unoffical Version";
+            this.label5.Text = "Cupscale 9001 - Unoffical";
             this.label5.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // panel7
