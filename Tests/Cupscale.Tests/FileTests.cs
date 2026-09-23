@@ -1,0 +1,92 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using Cupscale;
+using Cupscale.Cupscale;
+using Xunit;
+
+namespace CupscaleTests
+{
+    public class FileTests : IDisposable
+    {
+        readonly string dir = Path.Combine(Path.GetTempPath(), "cupscale-tests-" + Guid.NewGuid().ToString("N"));
+
+        public FileTests() => Directory.CreateDirectory(dir);
+
+        public void Dispose() => Directory.Delete(dir, true);
+
+        const string outRoot = @"C:\data\img-out";
+        const string inRoot = @"C:\data\img-in";
+
+        static Func<string, bool> Exists(params string[] files) => new HashSet<string>(files, StringComparer.OrdinalIgnoreCase).Contains;
+
+        [Theory]
+        [InlineData(@"a.jpg.png", @"a.jpg.tmp")]
+        [InlineData(@"x.png.png", @"x.png.tmp")]
+        [InlineData(@"r2image.200.png.png", @"r2image.200.png.tmp")]
+        [InlineData(@"sub\dir\a.webp.png", @"sub\dir\a.webp.tmp")]
+        public void GetTmpPath_KeepsOriginalNameAndFolders(string outRel, string expectedRel)
+        {
+            string result = PostProcessingQueue.GetTmpPath(Path.Combine(outRoot, outRel), outRoot, inRoot, Exists(Path.Combine(inRoot, outRel)));
+            Assert.Equal(Path.Combine(outRoot, expectedRel), result);
+        }
+
+        [Fact]
+        public void GetTmpPath_HandlesLegacyDoubleExtension()
+        {
+            string result = PostProcessingQueue.GetTmpPath(Path.Combine(outRoot, "a.jpg.png.png"), outRoot, inRoot, Exists(Path.Combine(inRoot, "a.jpg.png")));
+            Assert.Equal(Path.Combine(outRoot, "a.jpg.tmp"), result);
+        }
+
+        [Fact]
+        public void GetTmpPath_IgnoresFilesWithoutMatchingInput()
+        {
+            Assert.Null(PostProcessingQueue.GetTmpPath(Path.Combine(outRoot, "r2image.200.png"), outRoot, inRoot, Exists(Path.Combine(inRoot, "r2image.200.png.png"))));
+            Assert.Null(PostProcessingQueue.GetTmpPath(Path.Combine(outRoot, "a-model.png"), outRoot, inRoot, Exists()));
+        }
+
+        [Fact]
+        public void GetUniquePath_AppendsCounter()
+        {
+            string path = Path.Combine(dir, "img.png");
+            Assert.Equal(path, IoUtils.GetUniquePath(path));
+
+            File.WriteAllText(path, "");
+            File.WriteAllText(Path.Combine(dir, "img (2).png"), "");
+
+            Assert.Equal(Path.Combine(dir, "img (3).png"), IoUtils.GetUniquePath(path));
+        }
+
+        [Fact]
+        public void IsFileLocked_DetectsExclusiveHandle()
+        {
+            string path = Path.Combine(dir, "locked.bin");
+            File.WriteAllText(path, "x");
+
+            Assert.False(IoUtils.IsFileLocked(path));
+
+            using (new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
+                Assert.True(IoUtils.IsFileLocked(path));
+
+            Assert.False(IoUtils.IsFileLocked(Path.Combine(dir, "missing.bin")));
+            Assert.False(IoUtils.IsFileLocked(null));
+        }
+
+        [Fact]
+        public void IsFileLocked_ReadOnlyFileIsNotLocked()
+        {
+            string path = Path.Combine(dir, "ro.bin");
+            File.WriteAllText(path, "x");
+            File.SetAttributes(path, FileAttributes.ReadOnly);
+
+            try
+            {
+                Assert.False(IoUtils.IsFileLocked(path));
+            }
+            finally
+            {
+                File.SetAttributes(path, FileAttributes.Normal);
+            }
+        }
+    }
+}

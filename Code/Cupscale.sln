@@ -5,6 +5,8 @@ VisualStudioVersion = 16.0.30413.136
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cupscale", "Cupscale.csproj", "{CB003524-BE0F-42E5-BDE2-A98DCE51CE0A}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cupscale.Tests", "..\Tests\Cupscale.Tests\Cupscale.Tests.csproj", "{78CBF69A-320F-4BD9-86E2-42D46E7BE1DA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -15,6 +17,10 @@ Global
 		{CB003524-BE0F-42E5-BDE2-A98DCE51CE0A}.Debug|x64.Build.0 = Debug|x64
 		{CB003524-BE0F-42E5-BDE2-A98DCE51CE0A}.Release|x64.ActiveCfg = Release|x64
 		{CB003524-BE0F-42E5-BDE2-A98DCE51CE0A}.Release|x64.Build.0 = Release|x64
+		{78CBF69A-320F-4BD9-86E2-42D46E7BE1DA}.Debug|x64.ActiveCfg = Debug|x64
+		{78CBF69A-320F-4BD9-86E2-42D46E7BE1DA}.Debug|x64.Build.0 = Debug|x64
+		{78CBF69A-320F-4BD9-86E2-42D46E7BE1DA}.Release|x64.ActiveCfg = Release|x64
+		{78CBF69A-320F-4BD9-86E2-42D46E7BE1DA}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
