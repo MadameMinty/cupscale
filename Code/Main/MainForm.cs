@@ -597,6 +597,50 @@ namespace Cupscale.Main
 				Upscale.overwriteMode = Upscale.Overwrite.Yes;
 		}
 
+		bool loadingQuality;
+
+		/// <summary> Config key for the selected image format's quality setting, or null if it has none. </summary>
+		string GetQualityKey ()
+        {
+			if (htTabControl.SelectedIndex == 2)	// Video tab uses its own format box
+				return null;
+			if (imageOutputFormat.Text == Upscale.ImgExportMode.JPEG.ToStringTitleCase()) return "jpegQ";
+			if (imageOutputFormat.Text == Upscale.ImgExportMode.WEBP.ToStringTitleCase()) return "webpQ";
+			return null;
+		}
+
+		/// <summary> Enables the inline quality box for JPEG/WebP and loads its value. Also call after Settings changed it. </summary>
+		public void RefreshOutputQuality ()
+        {
+			string key = GetQualityKey();
+			outputQuality.Enabled = key != null;
+			outputQualityLabel.ForeColor = key != null ? Color.White : Color.Gray;
+
+			if (key == null)
+			{
+				outputQualityLabel.Text = "Quality:";
+				return;
+			}
+
+			outputQualityLabel.Text = key == "jpegQ" ? "JPEG Quality:" : "WebP Quality:";
+			loadingQuality = true;
+			outputQuality.Value = Math.Max(outputQuality.Minimum, Math.Min(outputQuality.Maximum, Config.GetInt(key)));
+			loadingQuality = false;
+		}
+
+		private void imageOutputFormat_SelectedIndexChanged(object sender, EventArgs e)
+        {
+			RefreshOutputQuality();
+        }
+
+		private void outputQuality_ValueChanged(object sender, EventArgs e)
+        {
+			string key = GetQualityKey();
+
+			if (!loadingQuality && key != null)
+				Config.Set(key, ((int)outputQuality.Value).ToString());
+        }
+
         private void postResizeMode_SelectedIndexChanged(object sender, EventArgs e)
         {
 			postResizeOnlyDownscale.Enabled = postResizeMode.SelectedIndex != 0;
@@ -811,6 +855,7 @@ namespace Cupscale.Main
 				VideoUpscaleUI.TabSelected();
 				videoOutputFormat.Visible = true;
 			}
+			RefreshOutputQuality();
 		}
 
         private void videoTab_DragEnter(object sender, DragEventArgs e)

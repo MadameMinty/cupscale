@@ -98,6 +98,8 @@ namespace Cupscale.Main
             this.comparisonToolBtn = new HTAlt.WinForms.HTButton();
             this.settingsBtn = new HTAlt.WinForms.HTButton();
             this.vramLabel = new System.Windows.Forms.Label();
+            this.outputQuality = new System.Windows.Forms.NumericUpDown();
+            this.outputQualityLabel = new System.Windows.Forms.Label();
             this.flowPanelRight = new System.Windows.Forms.FlowLayoutPanel();
             this.upscalePanel = new System.Windows.Forms.Panel();
             this.cancelBtn = new HTAlt.WinForms.HTButton();
@@ -1410,6 +1412,8 @@ namespace Cupscale.Main
             this.savePanel.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
             this.savePanel.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.savePanel.Controls.Add(this.videoOutputFormat);
+            this.savePanel.Controls.Add(this.outputQuality);
+            this.savePanel.Controls.Add(this.outputQualityLabel);
             this.savePanel.Controls.Add(this.label10);
             this.savePanel.Controls.Add(this.label23);
             this.savePanel.Controls.Add(this.prevOverwriteCombox);
@@ -1418,13 +1422,12 @@ namespace Cupscale.Main
             this.savePanel.Location = new System.Drawing.Point(4, 640);
             this.savePanel.Margin = new System.Windows.Forms.Padding(4);
             this.savePanel.Name = "savePanel";
-            this.savePanel.Size = new System.Drawing.Size(413, 151);
+            this.savePanel.Size = new System.Drawing.Size(413, 183);
             this.savePanel.TabIndex = 2;
             // 
             // videoOutputFormat
             // 
-            this.videoOutputFormat.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+            this.videoOutputFormat.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
             this.videoOutputFormat.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
             this.videoOutputFormat.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.videoOutputFormat.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
@@ -1439,8 +1442,7 @@ namespace Cupscale.Main
             // 
             // label10
             // 
-            this.label10.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+            this.label10.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
             this.label10.AutoSize = true;
             this.label10.ForeColor = System.Drawing.Color.White;
             this.label10.Location = new System.Drawing.Point(7, 28);
@@ -1463,8 +1465,7 @@ namespace Cupscale.Main
             // 
             // prevOverwriteCombox
             // 
-            this.prevOverwriteCombox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+            this.prevOverwriteCombox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
             this.prevOverwriteCombox.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
             this.prevOverwriteCombox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.prevOverwriteCombox.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
@@ -1482,8 +1483,7 @@ namespace Cupscale.Main
             // 
             // imageOutputFormat
             // 
-            this.imageOutputFormat.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+            this.imageOutputFormat.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
             this.imageOutputFormat.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
             this.imageOutputFormat.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.imageOutputFormat.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
@@ -1501,11 +1501,37 @@ namespace Cupscale.Main
             this.imageOutputFormat.Name = "imageOutputFormat";
             this.imageOutputFormat.Size = new System.Drawing.Size(396, 24);
             this.imageOutputFormat.TabIndex = 4;
-            // 
+            this.imageOutputFormat.SelectedIndexChanged += new System.EventHandler(this.imageOutputFormat_SelectedIndexChanged);
+            //
+            // outputQualityLabel
+            //
+            this.outputQualityLabel.AutoSize = true;
+            this.outputQualityLabel.ForeColor = System.Drawing.Color.White;
+            this.outputQualityLabel.Location = new System.Drawing.Point(7, 154);
+            this.outputQualityLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.outputQualityLabel.Name = "outputQualityLabel";
+            this.outputQualityLabel.Size = new System.Drawing.Size(90, 16);
+            this.outputQualityLabel.TabIndex = 7;
+            this.outputQualityLabel.Text = "Quality:";
+            //
+            // outputQuality
+            //
+            this.outputQuality.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            this.outputQuality.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.outputQuality.ForeColor = System.Drawing.Color.White;
+            this.outputQuality.Location = new System.Drawing.Point(110, 150);
+            this.outputQuality.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
+            this.outputQuality.Maximum = new decimal(new int[] { 100, 0, 0, 0 });
+            this.outputQuality.Value = new decimal(new int[] { 95, 0, 0, 0 });
+            this.outputQuality.Name = "outputQuality";
+            this.outputQuality.Size = new System.Drawing.Size(90, 22);
+            this.outputQuality.TabIndex = 8;
+            this.outputQuality.Enabled = false;
+            this.outputQuality.ValueChanged += new System.EventHandler(this.outputQuality_ValueChanged);
+            //
             // label11
             // 
-            this.label11.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+            this.label11.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
             this.label11.AutoSize = true;
             this.label11.ForeColor = System.Drawing.Color.White;
             this.label11.Location = new System.Drawing.Point(7, 90);
@@ -2755,6 +2781,8 @@ namespace Cupscale.Main
         private Label label18;
         private ComboBox preResizeFilter;
         private Label vramLabel;
+        private NumericUpDown outputQuality;
+        private Label outputQualityLabel;
         private RadioButton advancedBtn;
         private Button advancedConfigureBtn;
         private HTAlt.WinForms.HTButton comparisonToolBtn;

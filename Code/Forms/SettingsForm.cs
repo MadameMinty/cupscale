@@ -94,6 +94,7 @@ namespace Cupscale.Forms
             SaveSettings();
             await EmbeddedPython.Init();
             Program.mainForm.LoadEsrganOptions();
+            Program.mainForm.RefreshOutputQuality();
 
             if(Config.GetInt("esrganPytorchPythonRuntime") == 1 && !File.Exists(EmbeddedPython.GetEmbedPyPath()))
             {
