@@ -1,4 +1,5 @@
-﻿using Cupscale.IO;
+﻿using Cupscale.Cupscale;
+using Cupscale.IO;
 using Cupscale.UI;
 using System;
 using System.Collections.Generic;
@@ -51,7 +52,19 @@ namespace Cupscale.Main
             path = newPath;
             string format = PreviewUi.outputFormat.Text;
 
-            if (Program.lastUpscaleIsVideo || format == Upscale.ImgExportMode.PNG.ToStringTitleCase())
+            if (Program.lastUpscaleIsVideo)     // Temp frames for ffmpeg: re-encode only if resizing
+            {
+                bool resize = !dontResize && !(ImageProcessing.postScaleMode == Upscale.ScaleMode.Percent && ImageProcessing.postScaleValue == 100);
+
+                if (resize || !path.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
+                    await ImageProcessing.PostProcessImage(path, ImageProcessing.Format.PngFast, dontResize);
+                else if (Upscale.currentMode == Upscale.UpscaleMode.Batch)
+                    PostProcessingQueue.lastOutfile = path;
+
+                return;
+            }
+
+            if (format == Upscale.ImgExportMode.PNG.ToStringTitleCase())
             {
                 await ImageProcessing.PostProcessImage(path, ImageProcessing.Format.Png50, dontResize);
                 return;
