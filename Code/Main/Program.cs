@@ -105,6 +105,9 @@ namespace Cupscale
 
         public static MsgBox ShowMessage(string msg, string title = "Message")
         {
+            if (mainForm != null && mainForm.IsHandleCreated && mainForm.InvokeRequired)    // Dialogs and their queue live on the UI thread
+                return (MsgBox)mainForm.Invoke(new Func<MsgBox>(() => ShowMessage(msg, title)));
+
             DialogQueue.Init();
             MsgBox msgBox = new MsgBox(msg.Replace("\n", Environment.NewLine), title);
             DialogQueue.ShowDialog(msgBox);
