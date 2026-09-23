@@ -30,6 +30,7 @@ namespace Cupscale.Main
 		{
 			CheckForIllegalCrossThreadCalls = false;
 			InitializeComponent();
+			label5.Text = $"Cupscale {BuildInfo.Version} - Unofficial";
 			PreviewUi.Init(previewImg, model1TreeBtn, model2TreeBtn, imageOutputFormat, prevOverwriteCombox);
 			BatchUpscaleUI.Init(batchOutDir, batchFileList, batchDirLabel);
 			VideoUpscaleUI.Init(videoOutDir, videoLogBox, videoPathLabel, videoOutputFormat);

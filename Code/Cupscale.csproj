@@ -71,6 +71,22 @@
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
+  <!-- BuildInfo.Version = contents of ..\VERSION, baked in at compile time -->
+  <PropertyGroup>
+    <AppVersion>$([System.IO.File]::ReadAllText('$(MSBuildProjectDirectory)\..\VERSION').Trim())</AppVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="..\VERSION" />
+  </ItemGroup>
+  <Target Name="GenerateBuildInfo" BeforeTargets="CoreCompile" Inputs="..\VERSION" Outputs="$(IntermediateOutputPath)BuildInfo.g.cs">
+    <WriteLinesToFile File="$(IntermediateOutputPath)BuildInfo.g.cs" Overwrite="true" WriteOnlyWhenDifferent="true"
+      Lines="namespace Cupscale { static class BuildInfo { public const string Version = &quot;$(AppVersion)&quot;%3B } }" />
+  </Target>
+  <Target Name="IncludeBuildInfo" BeforeTargets="CoreCompile" AfterTargets="GenerateBuildInfo">
+    <ItemGroup>
+      <Compile Include="$(IntermediateOutputPath)BuildInfo.g.cs" />
+    </ItemGroup>
+  </Target>
   <ItemGroup>
     <None Update="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
