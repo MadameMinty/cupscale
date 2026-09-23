@@ -18,6 +18,8 @@ from utils.architecture.RRDB import RRDBNet as ESRGAN
 from utils.architecture.SPSR import SPSRNet as SPSR
 from utils.architecture.SRVGG import SRVGGNetCompact as RealESRGANv2
 
+inference_mode = getattr(torch, "inference_mode", torch.no_grad)  # torch < 1.9 fallback
+
 
 class SeamlessOptions(str, Enum):
     TILE = "tile"
@@ -101,10 +103,9 @@ class Upscale:
         self.alpha_boundary_offset = alpha_boundary_offset
         self.alpha_mode = alpha_mode
         self.log = log
-        if self.fp16:
-            torch.set_default_tensor_type(
-                torch.HalfTensor if self.cpu else torch.cuda.HalfTensor
-            )
+        self.model_cache = {}
+        if self.cache_max_split_depth and not self.cpu:
+            torch.backends.cudnn.benchmark = True  # Tile shapes repeat when split depth is cached
 
     def run(self) -> None:
         model_chain = (
@@ -246,12 +247,13 @@ class Upscale:
             sys.exit(1)
 
     # This code is a somewhat modified version of BlueAmulet's fork of ESRGAN by Xinntao
-    def process(self, img: np.ndarray):
+    def process(self, img: np.ndarray, to_uint8: bool = False) -> np.ndarray:
         """
-        Does the processing part of ESRGAN. This method only exists because the same block of code needs to be ran twice for images with transparency.
+        Runs the model on an HWC BGR(A) image. Integer images are normalized on the device.
 
                 Parameters:
-                        img (array): The image to process
+                        img (array): float image in [0, 1], or uint8/uint16 image
+                        to_uint8 (bool): return uint8 in [0, 255] (converted on the device) instead of float in [0, 1]
 
                 Returns:
                         rlt (array): The processed image
@@ -260,75 +262,89 @@ class Upscale:
             img = img[:, :, [2, 1, 0]]
         elif img.shape[2] == 4:
             img = img[:, :, [2, 1, 0, 3]]
-        img = torch.from_numpy(np.transpose(img, (2, 0, 1))).float()
-        if self.fp16:
-            img = img.half()
-        img_LR = img.unsqueeze(0)
-        img_LR = img_LR.to(self.device)
 
-        output = self.model(img_LR).data.squeeze(0).float().cpu().clamp_(0, 1).numpy()
+        max_val = 1.0
+        if np.issubdtype(img.dtype, np.integer):
+            max_val = float(np.iinfo(img.dtype).max)
+            if img.dtype != np.uint8:  # torch lacks general uint16 support
+                img = img.astype(np.float32)
+
+        tensor = torch.from_numpy(np.ascontiguousarray(np.transpose(img, (2, 0, 1))))
+        tensor = tensor.to(self.device, non_blocking=True).float()
+        if max_val != 1.0:
+            tensor = tensor.div_(max_val)
+        if self.fp16:
+            tensor = tensor.half()
+
+        with inference_mode():
+            output = self.model(tensor.unsqueeze(0)).squeeze(0).float().clamp_(0, 1)
+
         if output.shape[0] == 3:
             output = output[[2, 1, 0], :, :]
         elif output.shape[0] == 4:
             output = output[[2, 1, 0, 3], :, :]
-        output = np.transpose(output, (1, 2, 0))
-        return output
+        if to_uint8:
+            output = output.mul_(255.0).round_().to(torch.uint8)
+        return output.permute(1, 2, 0).cpu().numpy()
 
     def load_model(self, model_path: str):
-        if model_path != self.last_model:
-            # interpolating OTF, example: 4xBox:25&4xPSNR:75
-            if (":" in model_path or "@" in model_path) and (
-                "&" in model_path or "|" in model_path
-            ):
-                interps = model_path.split("&")[:2]
-                model_1 = torch.load(interps[0].split("@")[0])
-                model_2 = torch.load(interps[1].split("@")[0])
-                state_dict = OrderedDict()
-                for k, v_1 in model_1.items():
-                    v_2 = model_2[k]
-                    state_dict[k] = (int(interps[0].split("@")[1]) / 100) * v_1 + (
-                        int(interps[1].split("@")[1]) / 100
-                    ) * v_2
-            else:
-                state_dict = torch.load(model_path)
+        if model_path == self.last_model:
+            return
 
-            # SRVGGNet Real-ESRGAN (v2)
-            if (
-                "params" in state_dict.keys()
-                and "body.0.weight" in state_dict["params"].keys()
-            ):
-                self.model = RealESRGANv2(state_dict)
-                self.last_in_nc = self.model.num_in_ch
-                self.last_out_nc = self.model.num_out_ch
-                self.last_nf = self.model.num_feat
-                self.last_nb = self.model.num_conv
-                self.last_scale = self.model.scale
-                self.last_model = model_path
-            # SPSR (ESRGAN with lots of extra layers)
-            elif "f_HR_conv1.0.weight" in state_dict:
-                self.model = SPSR(state_dict)
-                self.last_in_nc = self.model.in_nc
-                self.last_out_nc = self.model.out_nc
-                self.last_nf = self.model.num_filters
-                self.last_nb = self.model.num_blocks
-                self.last_scale = self.model.scale
-                self.last_model = model_path
-            # Regular ESRGAN, "new-arch" ESRGAN, Real-ESRGAN v1
-            else:
-                self.model = ESRGAN(state_dict)
-                self.last_in_nc = self.model.in_nc
-                self.last_out_nc = self.model.out_nc
-                self.last_nf = self.model.num_filters
-                self.last_nb = self.model.num_blocks
-                self.last_scale = self.model.scale
-                self.last_model = model_path
+        if model_path not in self.model_cache:
+            self.model_cache[model_path] = self.__build_model(model_path)
 
-            del state_dict
-        self.model.eval()
-        for k, v in self.model.named_parameters():
-            v.requires_grad = False
-        self.model = self.model.to(self.device)
+        (
+            self.model,
+            self.last_in_nc,
+            self.last_out_nc,
+            self.last_nf,
+            self.last_nb,
+            self.last_scale,
+        ) = self.model_cache[model_path]
         self.last_model = model_path
+
+    def __build_model(self, model_path: str):
+        # interpolating OTF, example: 4xBox@25&4xPSNR@75
+        if (":" in model_path or "@" in model_path) and (
+            "&" in model_path or "|" in model_path
+        ):
+            interps = model_path.split("&")[:2]
+            model_1 = ops.load_state_dict(interps[0].split("@")[0])
+            model_2 = ops.load_state_dict(interps[1].split("@")[0])
+            state_dict = OrderedDict()
+            for k, v_1 in model_1.items():
+                v_2 = model_2[k]
+                state_dict[k] = (int(interps[0].split("@")[1]) / 100) * v_1 + (
+                    int(interps[1].split("@")[1]) / 100
+                ) * v_2
+        else:
+            state_dict = ops.load_state_dict(model_path)
+
+        # SRVGGNet Real-ESRGAN (v2)
+        if (
+            "params" in state_dict.keys()
+            and "body.0.weight" in state_dict["params"].keys()
+        ):
+            model = RealESRGANv2(state_dict)
+            info = (model.num_in_ch, model.num_out_ch, model.num_feat, model.num_conv, model.scale)
+        # SPSR (ESRGAN with lots of extra layers)
+        elif "f_HR_conv1.0.weight" in state_dict:
+            model = SPSR(state_dict)
+            info = (model.in_nc, model.out_nc, model.num_filters, model.num_blocks, model.scale)
+        # Regular ESRGAN, "new-arch" ESRGAN, Real-ESRGAN v1
+        else:
+            model = ESRGAN(state_dict)
+            info = (model.in_nc, model.out_nc, model.num_filters, model.num_blocks, model.scale)
+
+        del state_dict
+        model.eval()
+        for _, v in model.named_parameters():
+            v.requires_grad = False
+        model = model.to(self.device)
+        if self.fp16:
+            model = model.half()
+        return (model,) + info
 
     # This code is a somewhat modified version of BlueAmulet's fork of ESRGAN by Xinntao
     def upscale(self, img: np.ndarray) -> np.ndarray:
@@ -343,14 +359,29 @@ class Upscale:
                         output: The processed image
         """
 
-        img = img * 1.0 / np.iinfo(img.dtype).max
-
-        if (
+        needs_alpha_handling = (
             img.ndim == 3
             and img.shape[2] == 4
             and self.last_in_nc == 3
             and self.last_out_nc == 3
-        ):
+        )
+
+        if not needs_alpha_handling:  # Fast path: normalize and quantize on the device
+            if img.ndim == 2:
+                img = np.tile(
+                    np.expand_dims(img, axis=2), (1, 1, min(self.last_in_nc, 3))
+                )
+            if img.shape[2] > self.last_in_nc:  # remove extra channels
+                self.log.warning("Truncating image channels")
+                img = img[:, :, : self.last_in_nc]
+            # pad with solid alpha channel
+            elif img.shape[2] == 3 and self.last_in_nc == 4:
+                img = np.dstack((img, np.full(img.shape[:-1], np.iinfo(img.dtype).max, img.dtype)))
+            return self.process(img, to_uint8=True)
+
+        img = img * 1.0 / np.iinfo(img.dtype).max
+
+        if needs_alpha_handling:
 
             # Fill alpha with white and with black, remove the difference
             if self.alpha_mode == AlphaOptions.BG_DIFFERENCE:
@@ -418,18 +449,6 @@ class Upscale:
                     np.where(alpha <= half_transparent_upper_bound, 0.5, 1),
                 )
                 output[:, :, 3] = alpha
-        else:
-            if img.ndim == 2:
-                img = np.tile(
-                    np.expand_dims(img, axis=2), (1, 1, min(self.last_in_nc, 3))
-                )
-            if img.shape[2] > self.last_in_nc:  # remove extra channels
-                self.log.warning("Truncating image channels")
-                img = img[:, :, : self.last_in_nc]
-            # pad with solid alpha channel
-            elif img.shape[2] == 3 and self.last_in_nc == 4:
-                img = np.dstack((img, np.full(img.shape[:-1], 1.0)))
-            output = self.process(img)
 
         output = (output * 255.0).round()
 
