@@ -1,7 +1,7 @@
 # Cupscale
 Image Upscaling GUI based on ESRGAN
 
-![](https://i.imgur.com/ntIuSrv.png)
+![](Media/readme.png)
 
 ## Credits:
 
