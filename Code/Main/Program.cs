@@ -13,10 +13,7 @@ using Cupscale.Main;
 using Cupscale.OS;
 using Cupscale.UI;
 using ImageMagick;
-using Win32Interop.Enums;
 using Paths = Cupscale.IO.Paths;
-
-[assembly: System.Windows.Media.DisableDpiAwareness] // Disable Dpi awareness in the application assembly.
 
 namespace Cupscale
 {
@@ -46,6 +43,8 @@ namespace Cupscale
         [STAThread]
         private static void Main()
         {
+            Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);  // Was App.config DpiAwareness on .NET Framework
+
             try
             {
                 string lockfile = Path.Combine(Paths.GetDataPath(), "lockfile");
