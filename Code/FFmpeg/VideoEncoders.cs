@@ -5,10 +5,10 @@ using System.Linq;
 
 namespace Cupscale
 {
-    /// <summary> MP4 encoder presets. Quality levels are matched by PSNR across codecs; High is lossless where the encoder supports it. </summary>
+    /// <summary> MP4 encoder presets. Quality levels are matched by PSNR across codecs; Lossless is exact where the encoder supports it. </summary>
     static class VideoEncoders
     {
-        public enum Quality { Low, Normal, High }
+        public enum Quality { Normal, High, Lossless }
 
         public const string Custom = "Custom";
 
@@ -22,15 +22,15 @@ namespace Cupscale
 
         static string X264(string e, Quality q) => q switch
         {
-            Quality.Low => "-c:v libx264 -preset slow -crf 22",
-            Quality.Normal => "-c:v libx264 -preset slow -crf 18",
+            Quality.Normal => "-c:v libx264 -preset slow -crf 22",
+            Quality.High => "-c:v libx264 -preset slow -crf 18",
             _ => "-c:v libx264 -preset veryslow -qp 0",
         };
 
         static string X265(string e, Quality q) => q switch
         {
-            Quality.Low => "-c:v libx265 -preset slow -crf 24",
-            Quality.Normal => "-c:v libx265 -preset slow -crf 20",
+            Quality.Normal => "-c:v libx265 -preset slow -crf 24",
+            Quality.High => "-c:v libx265 -preset slow -crf 20",
             _ => "-c:v libx265 -preset slow -x265-params lossless=1",
         };
 
@@ -41,18 +41,18 @@ namespace Cupscale
             string rate = e == "libsvtav1" ? "" : " -b:v 0";
             return q switch
             {
-                Quality.Low => $"{c} -crf 34{rate}",
-                Quality.Normal => $"{c} -crf 26{rate}",
+                Quality.Normal => $"{c} -crf 34{rate}",
+                Quality.High => $"{c} -crf 26{rate}",
                 _ => $"{c} {lossless}",
             };
         }
 
-        static string Nvenc(string e, Quality q, int cqLow, int cqNormal, bool hasLossless)
+        static string Nvenc(string e, Quality q, int cqNormal, int cqHigh, bool hasLossless)
         {
             string c = $"-c:v {e} -preset p7";
-            if (q == Quality.High)
+            if (q == Quality.Lossless)
                 return hasLossless ? $"{c} -tune lossless" : $"{c} -rc vbr -cq 16 -b:v 0";
-            return $"{c} -rc vbr -cq {(q == Quality.Low ? cqLow : cqNormal)} -b:v 0";
+            return $"{c} -rc vbr -cq {(q == Quality.Normal ? cqNormal : cqHigh)} -b:v 0";
         }
 
         public static readonly List<Encoder> All = new List<Encoder>
@@ -85,7 +85,7 @@ namespace Cupscale
                 return customArgs.Trim();
 
             Encoder encoder = All.FirstOrDefault(e => e.Name == encoderName && Pick(e, ffmpegEncoders) != null) ?? All.First(e => e.Name == DefaultName);
-            Quality q = Enum.TryParse(quality, true, out Quality parsed) ? parsed : Quality.Normal;
+            Quality q = Enum.TryParse(quality, true, out Quality parsed) ? parsed : Quality.High;
             return encoder.Args(Pick(encoder, ffmpegEncoders) ?? encoder.FfmpegEncoders[0], q);
         }
 

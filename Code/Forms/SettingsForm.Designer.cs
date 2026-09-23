@@ -1462,7 +1462,7 @@
             this.pictureBox11.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.pictureBox11.TabIndex = 22;
             this.pictureBox11.TabStop = false;
-            this.toolTip.SetToolTip(this.pictureBox11, "Low: small files for sharing.\r\nNormal: visually transparent for most content.\r\nHigh: lossless where the encoder supports it (for further processing), otherwise near-lossless. Files are large.");
+            this.toolTip.SetToolTip(this.pictureBox11, "Normal: small files for sharing.\r\nHigh: visually transparent for most content.\r\nLossless: exact where the encoder supports it (for further processing); AV1 NVENC is near-lossless. Files are large.");
             // 
             // vidQuality
             // 
@@ -1474,7 +1474,7 @@
             this.vidQuality.Location = new System.Drawing.Point(220, 107);
             this.vidQuality.Name = "vidQuality";
             this.vidQuality.Size = new System.Drawing.Size(220, 24);
-            this.vidQuality.TabIndex = 21;            this.vidQuality.Items.AddRange(new object[] { "Low", "Normal", "High" });
+            this.vidQuality.TabIndex = 21;            this.vidQuality.Items.AddRange(new object[] { "Normal", "High", "Lossless" });
 
             // 
             // label37

@@ -279,7 +279,7 @@ namespace Cupscale
             if (key == "realEsrganNcnnGpus") return WriteDefault(key, "auto");
             // Video
             if (key == "vidEncoder") return WriteDefault(key, Get("h265") == "True" ? "H.265 (CPU)" : VideoEncoders.DefaultName);   // Migrates the old H.265 checkbox
-            if (key == "vidQuality") return WriteDefault(key, "Normal");
+            if (key == "vidQualityPreset") return WriteDefault(key, "High");
             if (key == "gifskiQ") return WriteDefault(key, "100");
             if (key == "vidEnableAudio") return WriteDefault(key, "True");
 

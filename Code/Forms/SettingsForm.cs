@@ -149,7 +149,7 @@ namespace Cupscale.Forms
             // Video
 
             Config.Set("vidEncoder", vidEncoder.Text);
-            Config.Set("vidQuality", vidQuality.Text);
+            Config.Set("vidQualityPreset", vidQuality.Text);
             Config.Set("vidCustomArgs", vidCustomArgs.Text.Trim());
             ConfigParser.SaveGuiElement(gifskiQ);
             ConfigParser.SaveGuiElement(vidEnableAudio);
@@ -173,8 +173,8 @@ namespace Cupscale.Forms
             vidEncoder.Items.Add(VideoEncoders.Custom);
             string saved = Config.Get("vidEncoder");
             vidEncoder.SelectedItem = vidEncoder.Items.Contains(saved) ? saved : (vidEncoder.Items.Contains(VideoEncoders.DefaultName) ? VideoEncoders.DefaultName : VideoEncoders.Custom);
-            string quality = Config.Get("vidQuality");
-            vidQuality.SelectedItem = vidQuality.Items.Contains(quality) ? quality : "Normal";
+            string quality = Config.Get("vidQualityPreset");
+            vidQuality.SelectedItem = vidQuality.Items.Contains(quality) ? quality : "High";
             vidCustomArgs.Text = Config.Get("vidCustomArgs");
             UpdateVideoEncoderControls();
         }

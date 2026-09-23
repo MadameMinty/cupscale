@@ -165,7 +165,7 @@ namespace Cupscale.UI
             {
                 DialogForm f = new DialogForm("Creating video from frames...", 300);
                 await Task.Delay(10);
-                string codecArgs = VideoEncoders.GetArgs(Config.Get("vidEncoder"), Config.Get("vidQuality"), Config.Get("vidCustomArgs"), VideoEncoders.GetFfmpegEncoders());
+                string codecArgs = VideoEncoders.GetArgs(Config.Get("vidEncoder"), Config.Get("vidQualityPreset"), Config.Get("vidCustomArgs"), VideoEncoders.GetFfmpegEncoders());
                 await FFmpegCommands.FramesToMp4(Paths.framesOutPath, codecArgs, fps, "", false);
                 if (Config.GetBool("vidEnableAudio"))
                 {
