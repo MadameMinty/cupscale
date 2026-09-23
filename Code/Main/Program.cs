@@ -41,20 +41,21 @@ namespace Cupscale
 
         public static bool busy;
 
+        static FileStream lockStream;   // Held for the app's lifetime to block other instances
+
         [STAThread]
         private static void Main()
         {
             try
             {
                 string lockfile = Path.Combine(Paths.GetDataPath(), "lockfile");
-                File.Create(lockfile).Dispose();
-                FileStream fs = File.Open(lockfile, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+                lockStream = new FileStream(lockfile, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
             }
             catch
             {
                 MessageBox.Show("Another instance of Cupscale seems to be running, accessing the following data folder:\n"
                     + Paths.GetDataPath() + ".\n\nMultiple instance are only possible if they use different data folders.\n"
-                    + "Starting Cupscale with \"-portable\" will use the current directory as data folder.", "Error");
+                    + "Starting Cupscale with \"-appdata\" will use %AppData%\\Cupscale as data folder.", "Error");
                 return;
             }
 
