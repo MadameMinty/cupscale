@@ -28,7 +28,6 @@ namespace Cupscale.Implementations
             string modelPath = mdl.model1Path;
             Program.lastModelName = mdl.model1Name;
 
-            bool showWindow = Config.GetInt("cmdDebugMode") > 0;
             bool stayOpen = Config.GetInt("cmdDebugMode") == 2;
 
             Program.mainForm.SetProgress(1f, "Converting model...");
@@ -44,30 +43,9 @@ namespace Cupscale.Implementations
             string opt = stayOpen ? "/K" : "/C";
             string tta = Config.GetBool("esrganNcnnTta") ? "-x" : "";
             string ts = Config.GetInt("esrganNcnnTilesize") >= 32 ? $"-t {Config.GetInt("esrganNcnnTilesize")}" : "";
-            string cmd = $"{opt} cd /D {Path.Combine(Paths.binPath, Imps.esrganNcnn.dir).Wrap()} & {exeName} -i {inpath.Wrap()} -o {outpath.Wrap()}" +
-                $" -g {Config.GetInt("esrganNcnnGpu")} -m {NcnnUtils.currentNcnnModel.Wrap()} -s {scale} {tta} {ts}";
-            Logger.Log("[CMD] " + cmd);
-
-            Process proc = OsUtils.NewProcess(!showWindow);
-            proc.StartInfo.Arguments = cmd;
-
-            if (!showWindow)
-            {
-                proc.OutputDataReceived += (sender, outLine) => { OutputHandler(outLine.Data, false); };
-                proc.ErrorDataReceived += (sender, outLine) => { OutputHandler(outLine.Data, true); };
-            }
-
-            Program.lastImpProcess = proc;
-            OsUtils.StartTracked(proc);
-
-            if (!showWindow)
-            {
-                proc.BeginOutputReadLine();
-                proc.BeginErrorReadLine();
-            }
-
-            while (!proc.HasExited)
-                await Task.Delay(50);
+            await NcnnUtils.RunPerFolder(inpath, outpath, (inDir, outDir) =>
+                $"{opt} cd /D {Path.Combine(Paths.binPath, Imps.esrganNcnn.dir).Wrap()} & {exeName} -i {inDir.Wrap()} -o {outDir.Wrap()}" +
+                $" -g {Config.GetInt("esrganNcnnGpu")} -m {NcnnUtils.currentNcnnModel.Wrap()} -s {scale} {tta} {ts}", OutputHandler);
 
             if (Upscale.currentMode == Upscale.UpscaleMode.Batch)
                 Program.mainForm.SetProgress(100f, "Post-Processing...");

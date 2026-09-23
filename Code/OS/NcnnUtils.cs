@@ -225,6 +225,67 @@ namespace Cupscale.OS
             }
 		}
 
+		/// <summary>
+		/// (input, output) folder pairs for every folder under inRoot that contains files, mirroring the tree under outRoot.
+		/// NCNN executables don't recurse into subfolders, so each folder is run separately.
+		/// </summary>
+		internal static List<(string inDir, string outDir)> GetFolderPairs(string inRoot, string outRoot)
+		{
+			var pairs = new List<(string, string)>();
+			string root = inRoot.TrimEnd('\\', '/');
+
+			if (!Directory.Exists(root))
+				return pairs;
+
+			foreach (string dir in new[] { root }.Concat(Directory.GetDirectories(root, "*", SearchOption.AllDirectories)))
+			{
+				if (!Directory.EnumerateFiles(dir).Any())
+					continue;
+
+				string rel = dir.Substring(root.Length).TrimStart('\\', '/');
+				pairs.Add((dir, rel.Length == 0 ? outRoot : Path.Combine(outRoot, rel)));
+			}
+
+			return pairs;
+		}
+
+		/// <summary> Runs an NCNN executable once per input folder. buildArgs(inDir, outDir) returns the cmd.exe arguments. </summary>
+		public static async Task RunPerFolder(string inRoot, string outRoot, Func<string, string, string> buildArgs, Action<string, bool> outputHandler)
+		{
+			bool showWindow = Config.GetInt("cmdDebugMode") > 0;
+
+			foreach (var (inDir, outDir) in GetFolderPairs(inRoot, outRoot))
+			{
+				if (Program.canceled)
+					return;
+
+				Directory.CreateDirectory(outDir);
+				string cmd = buildArgs(inDir, outDir);
+				Logger.Log("[CMD] " + cmd);
+
+				Process proc = OsUtils.NewProcess(!showWindow);
+				proc.StartInfo.Arguments = cmd;
+
+				if (!showWindow)
+				{
+					proc.OutputDataReceived += (sender, outLine) => { outputHandler(outLine.Data, false); };
+					proc.ErrorDataReceived += (sender, outLine) => { outputHandler(outLine.Data, true); };
+				}
+
+				Program.lastImpProcess = proc;
+				OsUtils.StartTracked(proc);
+
+				if (!showWindow)
+				{
+					proc.BeginOutputReadLine();
+					proc.BeginErrorReadLine();
+				}
+
+				while (!proc.HasExited)
+					await Task.Delay(50);
+			}
+		}
+
 		/// <summary> Parses NCNN progress lines like "12.50%", or "12,50%" (NCNN prints using the system locale). </summary>
 		public static bool TryParsePercent(string line, out float percent)
 		{

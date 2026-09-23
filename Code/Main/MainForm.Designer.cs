@@ -699,7 +699,7 @@ namespace Cupscale.Main
             this.batchOutMode.ForeColor = System.Drawing.Color.White;
             this.batchOutMode.FormattingEnabled = true;
             this.batchOutMode.Items.AddRange(new object[] {
-            "Keep Folder Structure [Currently not supported with NCNN!]",
+            "Keep Folder Structure",
             "Place All Images In Root Directory"});
             this.batchOutMode.Location = new System.Drawing.Point(11, 101);
             this.batchOutMode.Margin = new System.Windows.Forms.Padding(11, 2, 11, 2);

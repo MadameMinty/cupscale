@@ -57,6 +57,23 @@ namespace CupscaleTests
         }
 
         [Fact]
+        public void NcnnFolderPairs_MirrorSubfoldersWithFiles()
+        {
+            string inRoot = Path.Combine(dir, "in");
+            string outRoot = Path.Combine(dir, "out");
+            Directory.CreateDirectory(Path.Combine(inRoot, "a", "deep"));
+            Directory.CreateDirectory(Path.Combine(inRoot, "empty"));
+            File.WriteAllText(Path.Combine(inRoot, "top.png.png"), "");
+            File.WriteAllText(Path.Combine(inRoot, "a", "deep", "x.png.png"), "");
+
+            var pairs = Cupscale.OS.NcnnUtils.GetFolderPairs(inRoot, outRoot);
+
+            Assert.Equal(2, pairs.Count);
+            Assert.Contains((inRoot, outRoot), pairs);
+            Assert.Contains((Path.Combine(inRoot, "a", "deep"), Path.Combine(outRoot, "a", "deep")), pairs);
+        }
+
+        [Fact]
         public void GetUniquePath_AppendsCounter()
         {
             string path = Path.Combine(dir, "img.png");
