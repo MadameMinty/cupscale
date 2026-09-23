@@ -55,12 +55,19 @@ namespace Cupscale.OS
             return SetStartInfo(proc, hidden, filename);
         }
 
+        /// <summary> Starts a process that gets killed if Cupscale exits. </summary>
+        public static void StartTracked(Process proc)
+        {
+            proc.Start();
+            ChildProcessJob.Assign(proc);
+        }
+
         /// <summary> Starts a hidden (redirected) process and returns stdout + stderr. Drains both pipes concurrently to avoid deadlocks. </summary>
         public static string RunAndGetOutput(Process proc)
         {
             using (proc)
             {
-                proc.Start();
+                StartTracked(proc);
                 var errTask = proc.StandardError.ReadToEndAsync();
                 string output = proc.StandardOutput.ReadToEnd();
                 string err = errTask.Result;

@@ -19,7 +19,7 @@ namespace Cupscale
             Logger.Log("cmd.exe " + ffmpeg.StartInfo.Arguments);
             ffmpeg.OutputDataReceived += new DataReceivedEventHandler(OutputHandler);
             ffmpeg.ErrorDataReceived += new DataReceivedEventHandler(OutputHandler);
-            ffmpeg.Start();
+            OsUtils.StartTracked(ffmpeg);
             ffmpeg.BeginOutputReadLine();
             ffmpeg.BeginErrorReadLine();
 
@@ -48,7 +48,7 @@ namespace Cupscale
             Logger.Log("cmd.exe " + ffmpeg.StartInfo.Arguments);
             ffmpeg.OutputDataReceived += new DataReceivedEventHandler(OutputHandlerGifski);
             ffmpeg.ErrorDataReceived += new DataReceivedEventHandler(OutputHandlerGifski);
-            ffmpeg.Start();
+            OsUtils.StartTracked(ffmpeg);
             ffmpeg.BeginOutputReadLine();
             ffmpeg.BeginErrorReadLine();
 

@@ -73,7 +73,7 @@ namespace Cupscale.Implementations
             }
 
             Program.lastImpProcess = proc;
-            proc.Start();
+            OsUtils.StartTracked(proc);
 
             if (!showWindow)
             {

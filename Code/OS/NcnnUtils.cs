@@ -103,7 +103,7 @@ namespace Cupscale.OS
 			}
 
 			currentProcess = converterProc;
-			converterProc.Start();
+			OsUtils.StartTracked(converterProc);
 
 			if (!showWindow)
 			{
@@ -171,7 +171,7 @@ namespace Cupscale.OS
 			converterProc.ErrorDataReceived += ScaleCheckOutputHandler;
 
 			currentProcess = converterProc;
-			converterProc.Start();
+			OsUtils.StartTracked(converterProc);
 
 
 			converterProc.BeginOutputReadLine();

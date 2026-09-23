@@ -165,7 +165,7 @@ namespace Cupscale.OS
             string opt = stayOpen ? "/K" : "/C";
             Process compact = OsUtils.NewProcess(false);
             compact.StartInfo.Arguments = $"{opt} compact /C /S:{extractPath.Wrap()}";
-            compact.Start();
+            OsUtils.StartTracked(compact);
             Thread.Sleep(100);  // <-- ugly hack https://stackoverflow.com/a/1016863/14274419
             SetWindowText(compact.MainWindowHandle, "Compressing Python installation... Do not close this window!");
             compact.WaitForExit();

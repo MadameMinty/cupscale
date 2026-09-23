@@ -1,4 +1,5 @@
 ﻿using Cupscale.IO;
+using Cupscale.OS;
 using Cupscale.UI;
 using System;
 using System.Collections.Generic;
@@ -62,7 +63,7 @@ namespace Cupscale.ImageUtils
 				nvCompress.ErrorDataReceived += OutputHandler;
 			}
 			currentProcess = nvCompress;
-			nvCompress.Start();
+			OsUtils.StartTracked(nvCompress);
 			if (!showWindow)
 			{
 				nvCompress.BeginOutputReadLine();
