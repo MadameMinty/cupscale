@@ -176,6 +176,12 @@ namespace Cupscale.Main
 
 		public void SetProgress(float prog, string statusText = "")
 		{
+			if (InvokeRequired)		// Called from process output / worker threads
+			{
+				BeginInvoke((Action)(() => SetProgress(prog, statusText)));
+				return;
+			}
+
 			if(prog >= 0 && lastProg != prog)
             {
 				int percent = (int)Math.Round(prog);
@@ -194,6 +200,12 @@ namespace Cupscale.Main
 
 		public void SetVramLabel (string text, Color color)
         {
+			if (InvokeRequired)
+			{
+				BeginInvoke((Action)(() => SetVramLabel(text, color)));
+				return;
+			}
+
 			vramLabel.Text = text;
 			vramLabel.ForeColor = color;
 		}
@@ -201,6 +213,13 @@ namespace Cupscale.Main
 		public void SetBusy (bool state)
         {
 			Program.busy = state;
+
+			if (InvokeRequired)
+			{
+				BeginInvoke((Action)(() => SetBusy(state)));
+				return;
+			}
+
 			upscaleBtn.Enabled = !state;
 			refreshPreviewCutoutBtn.Enabled = !state;
 			refreshPreviewFullBtn.Enabled = !state;
