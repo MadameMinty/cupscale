@@ -1,6 +1,7 @@
 using Cupscale.Forms;
 using System;
 using System.IO;
+using System.Text;
 using System.Windows.Forms;
 using Cupscale.IO;
 using DT = System.DateTime;
@@ -11,11 +12,11 @@ namespace Cupscale
 	{
 		public static TextBox textbox;
 
-		public static string sessionLog;
+		static readonly StringBuilder sessionLog = new StringBuilder();
+		static readonly object logLock = new object();
+		static StreamWriter writer;
 
 		public static string file;
-
-		public static bool disable;
 
 		public static bool doLogIo;
 		public static bool doLogStatus;
@@ -36,55 +37,74 @@ namespace Cupscale
 
 		public static void Log(string s, bool logToFile = true, bool noLineBreak = false, bool replaceLastLine = false)
 		{
-			if (disable) return;
-
 			Console.WriteLine(s);
 
-			if (replaceLastLine)
+			lock (logLock)
 			{
-				textbox.Text = textbox.Text.Remove(textbox.Text.LastIndexOf(Environment.NewLine));
-				sessionLog = sessionLog.Remove(sessionLog.LastIndexOf(Environment.NewLine));
+				if (replaceLastLine)
+				{
+					textbox.Text = textbox.Text.Remove(textbox.Text.LastIndexOf(Environment.NewLine));
+					string log = sessionLog.ToString();
+					int lastBreak = log.LastIndexOf(Environment.NewLine);
+					if (lastBreak >= 0) sessionLog.Length = lastBreak;
+				}
+
+				sessionLog.Append(noLineBreak ? " " : Environment.NewLine).Append(s);
+
+				if (logToFile)
+					LogToFile(s, noLineBreak);
 			}
-
-			if(!noLineBreak)
-				sessionLog += Environment.NewLine + s;
-			else
-				sessionLog += " " + s;
-
-			if (logToFile)
-				LogToFile(s, noLineBreak);
 		}
 
-		public static void LogToFile(string s, bool noLineBreak)
+		static void LogToFile(string s, bool noLineBreak)     // Caller holds logLock
         {
-			if (string.IsNullOrWhiteSpace(file))
-				file = Path.Combine(Paths.GetDataPath(), "sessionlog.txt");
-			string time = DT.Now.Month + "-" + DT.Now.Day + "-" + DT.Now.Year + " " + DT.Now.Hour + ":" + DT.Now.Minute + ":" + DT.Now.Second;
-
             try
             {
+				if (writer == null)
+				{
+					if (string.IsNullOrWhiteSpace(file))
+						file = Path.Combine(Paths.GetDataPath(), "sessionlog.txt");
+
+					var fs = new FileStream(file, FileMode.Append, FileAccess.Write, FileShare.ReadWrite | FileShare.Delete);
+					writer = new StreamWriter(fs, new UTF8Encoding(false)) { AutoFlush = true };
+				}
+
 				if (!noLineBreak)
-					File.AppendAllText(file, Environment.NewLine + time + ": " + s);
+					writer.Write(Environment.NewLine + DT.Now.ToString("M-d-yyyy H:m:s") + ": " + s);
 				else
-					File.AppendAllText(file, " " + s);
+					writer.Write(" " + s);
 			}
             catch
             {
-				// idk how to deal with this race condition (?) but just ignoring it seems to work lol
+				writer = null;	// Retry opening on next write
             }
 		}
 
 		public static string GetSessionLog ()
         {
-			return sessionLog;
+			lock (logLock)
+				return sessionLog.ToString();
         }
 
 		public static MsgBox ErrorMessage (string msg, Exception e)
         {
 			string text = $"{msg}\n\n{e.Message}\n\nStack Trace:\n{e.StackTrace}";
-			Clipboard.SetText(text);
+			bool copied = TryCopyToClipboard(text);
 			Log(text);
-			return Program.ShowMessage(text + "\n\nThe error message was copied to the clipboard.", "Error");
+			return Program.ShowMessage(text + (copied ? "\n\nThe error message was copied to the clipboard." : ""), "Error");
 		}
+
+		static bool TryCopyToClipboard (string text)
+        {
+            try
+            {
+				Clipboard.SetText(text);	// Throws on non-STA threads
+				return true;
+            }
+            catch
+            {
+				return false;
+            }
+        }
 	}
 }
