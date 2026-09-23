@@ -1564,19 +1564,18 @@ namespace Cupscale.Main
             this.postResizePanel.Location = new System.Drawing.Point(4, 421);
             this.postResizePanel.Margin = new System.Windows.Forms.Padding(4);
             this.postResizePanel.Name = "postResizePanel";
-            this.postResizePanel.Size = new System.Drawing.Size(413, 182);
+            this.postResizePanel.Size = new System.Drawing.Size(413, 126);
             this.postResizePanel.TabIndex = 1;
             // 
             // postResizeOnlyDownscale
             // 
-            this.postResizeOnlyDownscale.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+            this.postResizeOnlyDownscale.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)));
             this.postResizeOnlyDownscale.AutoSize = true;
             this.postResizeOnlyDownscale.Checked = true;
             this.postResizeOnlyDownscale.CheckState = System.Windows.Forms.CheckState.Checked;
             this.postResizeOnlyDownscale.Enabled = false;
             this.postResizeOnlyDownscale.ForeColor = System.Drawing.Color.White;
-            this.postResizeOnlyDownscale.Location = new System.Drawing.Point(8, 154);
+            this.postResizeOnlyDownscale.Location = new System.Drawing.Point(8, 96);
             this.postResizeOnlyDownscale.Margin = new System.Windows.Forms.Padding(4);
             this.postResizeOnlyDownscale.Name = "postResizeOnlyDownscale";
             this.postResizeOnlyDownscale.Size = new System.Drawing.Size(296, 20);
@@ -1586,8 +1585,7 @@ namespace Cupscale.Main
             // 
             // postResizeMode
             // 
-            this.postResizeMode.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+            this.postResizeMode.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
             this.postResizeMode.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
             this.postResizeMode.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.postResizeMode.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
@@ -1599,10 +1597,10 @@ namespace Cupscale.Main
             "Pixels Width",
             "Pixels Longer Side",
             "Pixels Shorter Side"});
-            this.postResizeMode.Location = new System.Drawing.Point(165, 54);
+            this.postResizeMode.Location = new System.Drawing.Point(210, 30);
             this.postResizeMode.Margin = new System.Windows.Forms.Padding(11, 10, 11, 10);
             this.postResizeMode.Name = "postResizeMode";
-            this.postResizeMode.Size = new System.Drawing.Size(237, 24);
+            this.postResizeMode.Size = new System.Drawing.Size(192, 24);
             this.postResizeMode.TabIndex = 6;
             this.postResizeMode.SelectedIndexChanged += new System.EventHandler(this.postResizeMode_SelectedIndexChanged);
             // 
@@ -1619,21 +1617,19 @@ namespace Cupscale.Main
             // 
             // label8
             // 
-            this.label8.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+            this.label8.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)));
             this.label8.AutoSize = true;
             this.label8.ForeColor = System.Drawing.Color.White;
-            this.label8.Location = new System.Drawing.Point(7, 28);
+            this.label8.Location = new System.Drawing.Point(7, 34);
             this.label8.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label8.Name = "label8";
             this.label8.Size = new System.Drawing.Size(63, 16);
             this.label8.TabIndex = 3;
-            this.label8.Text = "New Size";
+            this.label8.Text = "New Size:";
             // 
             // postResizeFilter
             // 
-            this.postResizeFilter.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+            this.postResizeFilter.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
             this.postResizeFilter.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
             this.postResizeFilter.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.postResizeFilter.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
@@ -1643,16 +1639,15 @@ namespace Cupscale.Main
             "Mitchell",
             "Nearest Neighbor",
             "Bicubic"});
-            this.postResizeFilter.Location = new System.Drawing.Point(7, 116);
+            this.postResizeFilter.Location = new System.Drawing.Point(110, 62);
             this.postResizeFilter.Margin = new System.Windows.Forms.Padding(11, 10, 11, 10);
             this.postResizeFilter.Name = "postResizeFilter";
-            this.postResizeFilter.Size = new System.Drawing.Size(396, 24);
+            this.postResizeFilter.Size = new System.Drawing.Size(292, 24);
             this.postResizeFilter.TabIndex = 4;
             // 
             // postResizeScale
             // 
-            this.postResizeScale.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+            this.postResizeScale.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)));
             this.postResizeScale.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
             this.postResizeScale.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.postResizeScale.ForeColor = System.Drawing.Color.White;
@@ -1662,24 +1657,23 @@ namespace Cupscale.Main
             "100",
             "50",
             "25"});
-            this.postResizeScale.Location = new System.Drawing.Point(7, 54);
+            this.postResizeScale.Location = new System.Drawing.Point(110, 30);
             this.postResizeScale.Margin = new System.Windows.Forms.Padding(11, 10, 11, 10);
             this.postResizeScale.Name = "postResizeScale";
-            this.postResizeScale.Size = new System.Drawing.Size(136, 24);
+            this.postResizeScale.Size = new System.Drawing.Size(90, 24);
             this.postResizeScale.TabIndex = 2;
             // 
             // label9
             // 
-            this.label9.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+            this.label9.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)));
             this.label9.AutoSize = true;
             this.label9.ForeColor = System.Drawing.Color.White;
-            this.label9.Location = new System.Drawing.Point(7, 90);
+            this.label9.Location = new System.Drawing.Point(7, 66);
             this.label9.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label9.Name = "label9";
             this.label9.Size = new System.Drawing.Size(84, 16);
             this.label9.TabIndex = 5;
-            this.label9.Text = "Scaling Filter";
+            this.label9.Text = "Scaling Filter:";
             // 
             // rSpacer3
             // 
@@ -1720,19 +1714,18 @@ namespace Cupscale.Main
             this.preResizePanel.Location = new System.Drawing.Point(4, 202);
             this.preResizePanel.Margin = new System.Windows.Forms.Padding(4);
             this.preResizePanel.Name = "preResizePanel";
-            this.preResizePanel.Size = new System.Drawing.Size(413, 182);
+            this.preResizePanel.Size = new System.Drawing.Size(413, 126);
             this.preResizePanel.TabIndex = 3;
             // 
             // preResizeOnlyDownscale
             // 
-            this.preResizeOnlyDownscale.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+            this.preResizeOnlyDownscale.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)));
             this.preResizeOnlyDownscale.AutoSize = true;
             this.preResizeOnlyDownscale.Checked = true;
             this.preResizeOnlyDownscale.CheckState = System.Windows.Forms.CheckState.Checked;
             this.preResizeOnlyDownscale.Enabled = false;
             this.preResizeOnlyDownscale.ForeColor = System.Drawing.Color.White;
-            this.preResizeOnlyDownscale.Location = new System.Drawing.Point(8, 154);
+            this.preResizeOnlyDownscale.Location = new System.Drawing.Point(8, 96);
             this.preResizeOnlyDownscale.Margin = new System.Windows.Forms.Padding(4);
             this.preResizeOnlyDownscale.Name = "preResizeOnlyDownscale";
             this.preResizeOnlyDownscale.Size = new System.Drawing.Size(296, 20);
@@ -1742,8 +1735,7 @@ namespace Cupscale.Main
             // 
             // preResizeMode
             // 
-            this.preResizeMode.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+            this.preResizeMode.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
             this.preResizeMode.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
             this.preResizeMode.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.preResizeMode.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
@@ -1755,10 +1747,10 @@ namespace Cupscale.Main
             "Pixels Width",
             "Pixels Longer Side",
             "Pixels Shorter Side"});
-            this.preResizeMode.Location = new System.Drawing.Point(165, 54);
+            this.preResizeMode.Location = new System.Drawing.Point(210, 30);
             this.preResizeMode.Margin = new System.Windows.Forms.Padding(11, 10, 11, 10);
             this.preResizeMode.Name = "preResizeMode";
-            this.preResizeMode.Size = new System.Drawing.Size(237, 24);
+            this.preResizeMode.Size = new System.Drawing.Size(192, 24);
             this.preResizeMode.TabIndex = 6;
             // 
             // label28
@@ -1774,21 +1766,19 @@ namespace Cupscale.Main
             // 
             // label17
             // 
-            this.label17.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+            this.label17.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)));
             this.label17.AutoSize = true;
             this.label17.ForeColor = System.Drawing.Color.White;
-            this.label17.Location = new System.Drawing.Point(7, 28);
+            this.label17.Location = new System.Drawing.Point(7, 34);
             this.label17.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label17.Name = "label17";
             this.label17.Size = new System.Drawing.Size(63, 16);
             this.label17.TabIndex = 3;
-            this.label17.Text = "New Size";
+            this.label17.Text = "New Size:";
             // 
             // preResizeFilter
             // 
-            this.preResizeFilter.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+            this.preResizeFilter.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
             this.preResizeFilter.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
             this.preResizeFilter.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.preResizeFilter.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
@@ -1799,16 +1789,15 @@ namespace Cupscale.Main
             "Lanczos",
             "Bicubic",
             "Nearest Neighbor"});
-            this.preResizeFilter.Location = new System.Drawing.Point(7, 116);
+            this.preResizeFilter.Location = new System.Drawing.Point(110, 62);
             this.preResizeFilter.Margin = new System.Windows.Forms.Padding(11, 10, 11, 10);
             this.preResizeFilter.Name = "preResizeFilter";
-            this.preResizeFilter.Size = new System.Drawing.Size(396, 24);
+            this.preResizeFilter.Size = new System.Drawing.Size(292, 24);
             this.preResizeFilter.TabIndex = 4;
             // 
             // preResizeScale
             // 
-            this.preResizeScale.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+            this.preResizeScale.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)));
             this.preResizeScale.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
             this.preResizeScale.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.preResizeScale.ForeColor = System.Drawing.Color.White;
@@ -1818,24 +1807,23 @@ namespace Cupscale.Main
             "100",
             "50",
             "25"});
-            this.preResizeScale.Location = new System.Drawing.Point(7, 54);
+            this.preResizeScale.Location = new System.Drawing.Point(110, 30);
             this.preResizeScale.Margin = new System.Windows.Forms.Padding(11, 10, 11, 10);
             this.preResizeScale.Name = "preResizeScale";
-            this.preResizeScale.Size = new System.Drawing.Size(136, 24);
+            this.preResizeScale.Size = new System.Drawing.Size(90, 24);
             this.preResizeScale.TabIndex = 2;
             // 
             // label18
             // 
-            this.label18.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+            this.label18.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)));
             this.label18.AutoSize = true;
             this.label18.ForeColor = System.Drawing.Color.White;
-            this.label18.Location = new System.Drawing.Point(7, 90);
+            this.label18.Location = new System.Drawing.Point(7, 66);
             this.label18.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label18.Name = "label18";
             this.label18.Size = new System.Drawing.Size(84, 16);
             this.label18.TabIndex = 5;
-            this.label18.Text = "Scaling Filter";
+            this.label18.Text = "Scaling Filter:";
             // 
             // rSpacer4
             // 
@@ -2387,7 +2375,7 @@ namespace Cupscale.Main
             this.mdlPanel.Location = new System.Drawing.Point(4, 99);
             this.mdlPanel.Margin = new System.Windows.Forms.Padding(4);
             this.mdlPanel.Name = "mdlPanel";
-            this.mdlPanel.Size = new System.Drawing.Size(481, 317);
+            this.mdlPanel.Size = new System.Drawing.Size(481, 246);
             this.mdlPanel.TabIndex = 7;
             // 
             // advancedBtn
@@ -2436,16 +2424,15 @@ namespace Cupscale.Main
             // 
             // model2TreeBtn
             // 
-            this.model2TreeBtn.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+            this.model2TreeBtn.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
             this.model2TreeBtn.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
             this.model2TreeBtn.Enabled = false;
             this.model2TreeBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.model2TreeBtn.ForeColor = System.Drawing.Color.White;
-            this.model2TreeBtn.Location = new System.Drawing.Point(11, 277);
+            this.model2TreeBtn.Location = new System.Drawing.Point(80, 206);
             this.model2TreeBtn.Margin = new System.Windows.Forms.Padding(11, 10, 11, 10);
             this.model2TreeBtn.Name = "model2TreeBtn";
-            this.model2TreeBtn.Size = new System.Drawing.Size(457, 28);
+            this.model2TreeBtn.Size = new System.Drawing.Size(388, 28);
             this.model2TreeBtn.TabIndex = 18;
             this.model2TreeBtn.Text = "None Selected. Click To Change.";
             this.model2TreeBtn.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -2472,11 +2459,10 @@ namespace Cupscale.Main
             // 
             // label14
             // 
-            this.label14.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+            this.label14.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)));
             this.label14.AutoSize = true;
             this.label14.ForeColor = System.Drawing.Color.White;
-            this.label14.Location = new System.Drawing.Point(11, 190);
+            this.label14.Location = new System.Drawing.Point(11, 176);
             this.label14.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label14.Name = "label14";
             this.label14.Size = new System.Drawing.Size(58, 16);
@@ -2498,15 +2484,14 @@ namespace Cupscale.Main
             // 
             // model1TreeBtn
             // 
-            this.model1TreeBtn.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+            this.model1TreeBtn.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
             this.model1TreeBtn.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
             this.model1TreeBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.model1TreeBtn.ForeColor = System.Drawing.Color.White;
-            this.model1TreeBtn.Location = new System.Drawing.Point(11, 215);
+            this.model1TreeBtn.Location = new System.Drawing.Point(80, 170);
             this.model1TreeBtn.Margin = new System.Windows.Forms.Padding(11, 10, 11, 10);
             this.model1TreeBtn.Name = "model1TreeBtn";
-            this.model1TreeBtn.Size = new System.Drawing.Size(457, 28);
+            this.model1TreeBtn.Size = new System.Drawing.Size(388, 28);
             this.model1TreeBtn.TabIndex = 17;
             this.model1TreeBtn.Text = "None Selected. Click To Change.";
             this.model1TreeBtn.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -2530,11 +2515,10 @@ namespace Cupscale.Main
             // 
             // label16
             // 
-            this.label16.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+            this.label16.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)));
             this.label16.AutoSize = true;
             this.label16.ForeColor = System.Drawing.Color.White;
-            this.label16.Location = new System.Drawing.Point(11, 254);
+            this.label16.Location = new System.Drawing.Point(11, 212);
             this.label16.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label16.Name = "label16";
             this.label16.Size = new System.Drawing.Size(58, 16);
