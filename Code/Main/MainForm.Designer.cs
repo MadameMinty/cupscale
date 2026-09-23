@@ -97,7 +97,6 @@ namespace Cupscale.Main
             this.openModelFolderBtn = new HTAlt.WinForms.HTButton();
             this.comparisonToolBtn = new HTAlt.WinForms.HTButton();
             this.settingsBtn = new HTAlt.WinForms.HTButton();
-            this.panel15 = new System.Windows.Forms.Panel();
             this.vramLabel = new System.Windows.Forms.Label();
             this.flowPanelRight = new System.Windows.Forms.FlowLayoutPanel();
             this.upscalePanel = new System.Windows.Forms.Panel();
@@ -221,7 +220,6 @@ namespace Cupscale.Main
             this.tableLayoutPanel13.SuspendLayout();
             this.panel6.SuspendLayout();
             this.panel7.SuspendLayout();
-            this.panel15.SuspendLayout();
             this.flowPanelRight.SuspendLayout();
             this.upscalePanel.SuspendLayout();
             this.rSpacer1.SuspendLayout();
@@ -297,10 +295,10 @@ namespace Cupscale.Main
             this.mainTableLayoutPanel.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 493F));
             this.mainTableLayoutPanel.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
             this.mainTableLayoutPanel.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 427F));
-            this.mainTableLayoutPanel.Controls.Add(this.tableLayoutPanel4, 1, 1);
+            this.mainTableLayoutPanel.Controls.Add(this.tableLayoutPanel4, 1, 0);
+            this.mainTableLayoutPanel.SetRowSpan(this.tableLayoutPanel4, 2);
             this.mainTableLayoutPanel.Controls.Add(this.panel6, 0, 0);
             this.mainTableLayoutPanel.Controls.Add(this.panel7, 2, 0);
-            this.mainTableLayoutPanel.Controls.Add(this.panel15, 1, 0);
             this.mainTableLayoutPanel.Controls.Add(this.flowPanelRight, 2, 1);
             this.mainTableLayoutPanel.Controls.Add(this.flowPanelLeft, 0, 1);
             this.mainTableLayoutPanel.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -320,22 +318,24 @@ namespace Cupscale.Main
             this.tableLayoutPanel4.Controls.Add(this.tableLayoutPanel5, 0, 1);
             this.tableLayoutPanel4.Controls.Add(this.htTabControl, 0, 0);
             this.tableLayoutPanel4.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.tableLayoutPanel4.Location = new System.Drawing.Point(497, 53);
+            this.tableLayoutPanel4.Location = new System.Drawing.Point(497, 4);
             this.tableLayoutPanel4.Margin = new System.Windows.Forms.Padding(4);
             this.tableLayoutPanel4.Name = "tableLayoutPanel4";
             this.tableLayoutPanel4.RowCount = 2;
             this.tableLayoutPanel4.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
             this.tableLayoutPanel4.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 31F));
-            this.tableLayoutPanel4.Size = new System.Drawing.Size(757, 998);
+            this.tableLayoutPanel4.Size = new System.Drawing.Size(757, 1047);
             this.tableLayoutPanel4.TabIndex = 5;
             // 
             // tableLayoutPanel5
             // 
-            this.tableLayoutPanel5.ColumnCount = 2;
+            this.tableLayoutPanel5.ColumnCount = 3;
+            this.tableLayoutPanel5.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 340F));
             this.tableLayoutPanel5.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 267F));
             this.tableLayoutPanel5.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.tableLayoutPanel5.Controls.Add(this.htProgBar, 1, 0);
-            this.tableLayoutPanel5.Controls.Add(this.panel11, 0, 0);
+            this.tableLayoutPanel5.Controls.Add(this.vramLabel, 0, 0);
+            this.tableLayoutPanel5.Controls.Add(this.panel11, 1, 0);
+            this.tableLayoutPanel5.Controls.Add(this.htProgBar, 2, 0);
             this.tableLayoutPanel5.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tableLayoutPanel5.Location = new System.Drawing.Point(4, 971);
             this.tableLayoutPanel5.Margin = new System.Windows.Forms.Padding(4);
@@ -1248,25 +1248,16 @@ namespace Cupscale.Main
             this.settingsBtn.UseVisualStyleBackColor = false;
             this.settingsBtn.Click += new System.EventHandler(this.settingsBtn_Click);
             // 
-            // panel15
-            // 
-            this.panel15.Controls.Add(this.vramLabel);
-            this.panel15.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.panel15.Location = new System.Drawing.Point(493, 0);
-            this.panel15.Margin = new System.Windows.Forms.Padding(0);
-            this.panel15.Name = "panel15";
-            this.panel15.Size = new System.Drawing.Size(765, 49);
-            this.panel15.TabIndex = 9;
-            // 
             // vramLabel
             // 
+            this.vramLabel.AutoEllipsis = true;
             this.vramLabel.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.vramLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.vramLabel.ForeColor = System.Drawing.Color.White;
             this.vramLabel.Location = new System.Drawing.Point(0, 0);
-            this.vramLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.vramLabel.Margin = new System.Windows.Forms.Padding(0, 0, 8, 0);
             this.vramLabel.Name = "vramLabel";
-            this.vramLabel.Size = new System.Drawing.Size(765, 49);
+            this.vramLabel.Size = new System.Drawing.Size(332, 23);
+            this.vramLabel.UseMnemonic = false;
             this.vramLabel.TabIndex = 2;
             this.vramLabel.Text = " ";
             this.vramLabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -2683,7 +2674,6 @@ namespace Cupscale.Main
             this.tableLayoutPanel13.PerformLayout();
             this.panel6.ResumeLayout(false);
             this.panel7.ResumeLayout(false);
-            this.panel15.ResumeLayout(false);
             this.flowPanelRight.ResumeLayout(false);
             this.upscalePanel.ResumeLayout(false);
             this.upscalePanel.PerformLayout();
@@ -2777,7 +2767,6 @@ namespace Cupscale.Main
         private ComboBox preResizeScale;
         private Label label18;
         private ComboBox preResizeFilter;
-        private Panel panel15;
         private Label vramLabel;
         private RadioButton advancedBtn;
         private Button advancedConfigureBtn;
