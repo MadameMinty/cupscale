@@ -52,5 +52,6 @@ Temporary files are stored in the installation directory by default, which is wh
 ## Building:
 
 - `tools/build-release.ps1` builds the release zip into `build/` (.NET 10 SDK), named after `VERSION`.
+- `tools/build-gui-test.ps1` updates the local test build in `build/gui-test`, keeping its config and models.
 - `tools/fetch-binaries.ps1` updates 7-Zip and fetches FFmpeg for local builds (releases download FFmpeg on first use).
 - `tools/build-python-runtime.ps1` builds the embedded Python runtime (`py.7z`).
