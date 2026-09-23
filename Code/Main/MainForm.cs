@@ -34,10 +34,15 @@ namespace Cupscale.Main
 			BatchUpscaleUI.Init(batchOutDir, batchFileList, batchDirLabel);
 			VideoUpscaleUI.Init(videoOutDir, videoLogBox, videoPathLabel, videoOutputFormat);
 			Program.mainForm = this;
-			OS.OsUtils.DarkWindow(this.Handle);
 
 			if(Config.GetBool("startMaximized"))
 				WindowState = FormWindowState.Maximized;
+		}
+
+		protected override void OnHandleCreated (EventArgs e)
+        {
+			base.OnHandleCreated(e);
+			OS.OsUtils.DarkWindow(Handle);	// Handle is recreated when toggling fullscreen
 		}
 
 		private async void MainForm_Load(object sender, EventArgs e)
@@ -753,6 +758,34 @@ namespace Cupscale.Main
         {
 			new AdvancedModelForm();
         }
+
+		FormWindowState preFullscreenState;
+
+		void ToggleFullscreen ()
+        {
+			if (FormBorderStyle == FormBorderStyle.None)
+			{
+				FormBorderStyle = FormBorderStyle.Sizable;
+				WindowState = preFullscreenState;
+				return;
+			}
+
+			preFullscreenState = WindowState;
+			WindowState = FormWindowState.Normal;	// Re-maximizing borderless covers the taskbar
+			FormBorderStyle = FormBorderStyle.None;
+			WindowState = FormWindowState.Maximized;
+		}
+
+		protected override bool ProcessCmdKey (ref Message msg, Keys keyData)
+        {
+			if (keyData == Keys.F11)	// Before focused controls see it
+			{
+				ToggleFullscreen();
+				return true;
+			}
+
+			return base.ProcessCmdKey(ref msg, keyData);
+		}
 
         private async void MainForm_KeyUp(object sender, KeyEventArgs e)
         {
