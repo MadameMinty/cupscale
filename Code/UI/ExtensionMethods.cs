@@ -25,7 +25,7 @@ namespace Cupscale.UI
 
 		public static int GetInt(this string str)
 		{
-			if (str.Length < 1 || str == null)
+			if (string.IsNullOrEmpty(str))
 				return 0;
 
 			try
@@ -73,7 +73,7 @@ namespace Cupscale.UI
 
 		public static float GetFloat(this string str)
 		{
-			if (str.Length < 1 || str == null)
+			if (string.IsNullOrEmpty(str))
 				return 0f;
 
 			string num = str.TrimNumbers(true).Replace(",", ".");
@@ -194,7 +194,7 @@ namespace Cupscale.UI
 		{
 			string str = inStr.Length <= maxChars ? inStr : inStr.Substring(0, maxChars);
 			if (addEllipsis && inStr.Length > maxChars)
-				str += "…";
+				str += "ï¿½";
 			return str;
 		}
 	}
