@@ -5,6 +5,7 @@ import argparse
 import logging
 import sys
 from collections import OrderedDict
+from concurrent.futures import ThreadPoolExecutor
 from enum import Enum
 from pathlib import Path
 from typing import List, Optional, Union
@@ -160,6 +161,9 @@ class Upscale:
         # TODO: there might be a better way of doing this but it's good enough for now
         split_depths = {}
 
+        writer = ThreadPoolExecutor(max_workers=2)
+        pending_writes = []
+
         for idx, img_path in enumerate(images, 1):
             img_input_path_rel = img_path.relative_to(self.input)
             output_dir = self.output.joinpath(img_input_path_rel).parent
@@ -228,11 +232,20 @@ class Upscale:
             if rlt.dtype != np.uint8:
                 rlt = np.clip(rlt, 0, 255).astype(np.uint8)
 
-            # Intermediate file (Cupscale re-encodes it), so favor speed over size
-            ops.imwrite_unicode(img_output_path_rel.absolute(), rlt, [cv2.IMWRITE_PNG_COMPRESSION, 1])
+            # Encode on a worker thread so the GPU can start the next image
+            while len(pending_writes) >= 4:  # Bound memory held by queued results
+                pending_writes.pop(0).result()
+            pending_writes.append(writer.submit(self.__write_output, img_output_path_rel.absolute(), rlt, img_path))
 
-            if self.delete_input:
-                img_path.unlink(missing_ok=True)
+        for future in pending_writes:
+            future.result()
+        writer.shutdown()
+
+    def __write_output(self, path: Path, img: np.ndarray, source: Path) -> None:
+        # Intermediate file (Cupscale re-encodes it), so favor speed over size
+        ops.imwrite_unicode(path, img, [cv2.IMWRITE_PNG_COMPRESSION, 1])
+        if self.delete_input:
+            source.unlink(missing_ok=True)
 
 
     def __check_model_path(self, model_path: str) -> str:

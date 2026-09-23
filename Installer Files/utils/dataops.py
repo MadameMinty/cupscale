@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import gc
+import os
 import warnings
 from pathlib import Path
 
@@ -20,11 +21,13 @@ def imread_unicode(path) -> np.ndarray:
 
 
 def imwrite_unicode(path, img: np.ndarray, params=None) -> None:
-    """cv2.imwrite that works with non-ASCII Windows paths."""
+    """cv2.imwrite that works with non-ASCII Windows paths. Writes atomically so readers never see partial files."""
     ok, buf = cv2.imencode(Path(path).suffix or ".png", img, params or [])
     if not ok:
         raise IOError(f"Failed to encode {path}")
-    buf.tofile(str(path))
+    part = f"{path}.part"
+    buf.tofile(part)
+    os.replace(part, str(path))
 
 
 def load_state_dict(path: str):
