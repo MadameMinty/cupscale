@@ -14,7 +14,7 @@ Inputs: `__fixtures__` (run `make_fixtures.ps1`). Outputs: `__outputs__\<scenari
 | `batch-same` | Same, format Same as source, output `__outputs__\batch-same` | Extensions kept (.jpg .png .webp .bmp .tga .dds), `r2image.200` and `zażółć ñ` intact, no "format not supported" popups |
 | `batch-root-jpeg` | Same, format JPEG, Copy to root, output `__outputs__\batch-root-jpeg` | Flat output, colours correct (no red/blue swap) |
 | cancel | Start `batch-png` again into `__outputs__\cancel`, cancel mid-run, then rerun `batch-png` | Cancel stops promptly; rerun completes; no files from the cancelled run in `batch-png` |
-| NCNN | Repeat `batch-png` with Real-ESRGAN (NCNN) into `__outputs__\batch-ncnn` | Progress shows (comma locale), completes |
+| NCNN | Repeat `batch-png` with Real-ESRGAN (NCNN) into `__outputs__\batch-ncnn` | Progress shows (comma locale), completes, `a\` and `b\` subfolders upscaled too |
 | `single` | Copy `__fixtures__\single\landscape.png` to `__outputs__\single\`, drop it on Preview, Upscale And Save | `landscape-<model>.png` 1024×768 next to it |
 | preview | Same image: Refresh preview (cutout), Full image, clipboard comparison, Save merged preview | Previews render, no errors |
 | `video-mp4` | Video tab, drop `__fixtures__\video\clip.mp4`, output `__outputs__\video-mp4`, format MP4 | 640×360, 29.97 fps exact, audio kept, 3 s |
