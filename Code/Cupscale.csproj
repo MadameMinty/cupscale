@@ -27,7 +27,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="7z.NET" Version="1.0.3" />
-    <PackageReference Include="Costura.Fody" Version="4.1.0" />
+    <PackageReference Include="Costura.Fody" Version="4.1.0" PrivateAssets="All" />
     <PackageReference Include="CyotekImageBox" Version="1.2.1" />
     <PackageReference Include="CyotekTabList" Version="2.0.0" />
     <PackageReference Include="DdsFileTypePlusHack" Version="1.0.4" />
@@ -38,7 +38,7 @@
     <PackageReference Include="HTAlt.WinForms" Version="0.1.6" />
     <PackageReference Include="Magick.NET-Q16-x64" Version="14.17.1" GeneratePathProperty="true" />
     <PackageReference Include="MozJpegSharp" Version="1.0.27" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageReference Include="NvAPIWrapper.Net" Version="0.8.1.101" />
   </ItemGroup>
   <ItemGroup>
