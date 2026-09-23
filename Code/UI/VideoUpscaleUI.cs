@@ -82,6 +82,11 @@ namespace Cupscale.UI
             Print("Upscaling frames...");
             await BatchUpscaleUI.Run(false, true, false, Paths.framesOutPath);
             await Task.Run(() => RenameOutFiles());
+            int upscaledFrames = IoUtils.GetAmountOfCompatibleFiles(Paths.framesOutPath, false);
+
+            if (upscaledFrames < amountFrames)    // ffmpeg stops at the first missing frame number
+                Program.ShowMessage($"Only {upscaledFrames} of {amountFrames} frames were upscaled. The video will be cut at the first missing frame - check the log.", "Warning");
+
             Print($"Done upscaling all frames.");
             BatchUpscaleUI.Reset();
             Print("Creating video from frames...");
