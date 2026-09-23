@@ -1,6 +1,5 @@
 ﻿using DdsFileTypePlus;
 using ImageMagick;
-using Microsoft.WindowsAPICodePack.Shell;
 using PaintDotNet;
 using System;
 using System.Collections.Generic;
@@ -102,21 +101,20 @@ namespace Cupscale.ImageUtils
             return bg;
         }
 
-        public static int GetColorDepth(string path)
+        /// <summary> True for grayscale, palette and bilevel images (formerly: shell bit depth &lt; 24). </summary>
+        public static bool IsLowColorDepth(MagickImage img)
         {
-            try
+            switch (img.ColorType)
             {
-                ShellFile shellFile = ShellFile.FromFilePath(path);
-                int depth = (int)shellFile.Properties.System.Image.BitDepth.Value;
-                return depth;
-                //MemoryStream stream = new MemoryStream(File.ReadAllBytes(path));
-                //var source = BitmapFrame.Create(stream, BitmapCreateOptions.IgnoreImageCache, BitmapCacheOption.OnDemand);
-                //return source.Format.BitsPerPixel;
-            }
-            catch (Exception e)
-            {
-                Logger.Log("[ImgUtils] Failed to read color depth: " + e.Message + " - Defaulting to 32.");
-                return 32;
+                case ColorType.Bilevel:
+                case ColorType.Grayscale:
+                case ColorType.GrayscaleAlpha:
+                case ColorType.Palette:
+                case ColorType.PaletteAlpha:
+                case ColorType.PaletteBilevelAlpha:
+                    return true;
+                default:
+                    return false;
             }
         }
 

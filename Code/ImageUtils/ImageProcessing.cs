@@ -243,15 +243,13 @@ namespace Cupscale
 
         static MagickImage CheckColorDepth (string path, MagickImage img)
         {
-            int depth = ImgUtils.GetColorDepth(path);
-            Logger.Log($"[ImgProc] Color depth of {Path.GetFileName(path)} is {depth}.");
-
-            if (depth < 24)
+            if (ImgUtils.IsLowColorDepth(img))
             {
-                Logger.Log("[ImgProc] Depth is <24 - Converting to 32-bit.");
+                Logger.Log($"[ImgProc] {Path.GetFileName(path)} is {img.ColorType} - Converting to 32-bit.");
                 MagickImage img32 = new MagickImage(MagickColors.Transparent, img.Width, img.Height);
                 img32.Format = MagickFormat.Png32;
                 img32.Composite(img, CompositeOperator.Over);
+                img.Dispose();
                 return img32;
             }
             return img;
