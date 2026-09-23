@@ -26,7 +26,7 @@ namespace Cupscale
 
 		public static bool ModelExists (string modelName)
         {
-			string[] files = Directory.GetFiles("*.pth", Config.Get("modelPath"), SearchOption.AllDirectories);
+			string[] files = Directory.GetFiles(Config.Get("modelPath"), "*.pth", SearchOption.AllDirectories);
 			foreach(string modelFile in files)
             {
 				if (Path.GetFileNameWithoutExtension(modelFile) == modelName)
