@@ -46,6 +46,34 @@ namespace CupscaleTests
         }
 
         [Fact]
+        public void SevenZip_ExtractsArchive()
+        {
+            Cupscale.IO.Paths.Init();
+            string dir = Path.Combine(Path.GetTempPath(), $"cupscale-7z-{Guid.NewGuid():N}");
+            Directory.CreateDirectory(dir);
+
+            try
+            {
+                string src = Path.Combine(dir, "zażółć.txt");
+                File.WriteAllText(src, "hello");
+                string archive = Path.Combine(dir, "a.7z");
+                string exe = Path.Combine(Cupscale.IO.Paths.binPath, "7za.exe");
+                Directory.CreateDirectory(Cupscale.IO.Paths.binPath);
+                File.WriteAllBytes(exe, Cupscale.Properties.Resources.x64_7za);
+                Process.Start(new ProcessStartInfo(exe, $"a \"{archive}\" \"{src}\"") { UseShellExecute = false, CreateNoWindow = true }).WaitForExit();
+
+                Cupscale.IO.SevenZip.Extract(archive, Path.Combine(dir, "out"));
+
+                Assert.Equal("hello", File.ReadAllText(Path.Combine(dir, "out", "zażółć.txt")));
+                Assert.Throws<IOException>(() => Cupscale.IO.SevenZip.Extract(Path.Combine(dir, "missing.7z"), dir));
+            }
+            finally
+            {
+                Directory.Delete(dir, true);
+            }
+        }
+
+        [Fact]
         public void MozJpeg_KeepsChannelOrder()
         {
             string path = Path.Combine(Path.GetTempPath(), $"cupscale-moz-{Guid.NewGuid():N}.jpg");

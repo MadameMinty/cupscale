@@ -65,6 +65,11 @@ namespace Cupscale.OS
         /// <summary> Starts a hidden (redirected) process and returns stdout + stderr. Drains both pipes concurrently to avoid deadlocks. </summary>
         public static string RunAndGetOutput(Process proc)
         {
+            return RunAndGetOutput(proc, out _);
+        }
+
+        public static string RunAndGetOutput(Process proc, out int exitCode)
+        {
             using (proc)
             {
                 StartTracked(proc);
@@ -72,6 +77,7 @@ namespace Cupscale.OS
                 string output = proc.StandardOutput.ReadToEnd();
                 string err = errTask.Result;
                 proc.WaitForExit();
+                exitCode = proc.ExitCode;
 
                 if (!string.IsNullOrWhiteSpace(err))
                     output += "\n" + err;

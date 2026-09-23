@@ -26,7 +26,6 @@
     <EmbeddedResource Include="$(PkgMagick_NET-Q16-x64)\runtimes\win-x64\native\Magick.Native-Q16-x64.dll" Link="Costura64\Magick.Native-Q16-x64.dll" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="7z.NET" Version="1.0.3" />
     <PackageReference Include="Costura.Fody" Version="4.1.0" PrivateAssets="All" />
     <PackageReference Include="CyotekImageBox" Version="1.2.1" />
     <PackageReference Include="CyotekTabList" Version="2.0.0" />

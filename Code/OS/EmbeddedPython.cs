@@ -230,14 +230,7 @@ namespace Cupscale.OS
             {
                 try
                 {
-                    string path7za = Path.Combine(Installer.path, "7za.exe");
-
-                    if (!File.Exists(path7za))     // Not shipped in bin; bundled as resource
-                        File.WriteAllBytes(path7za, Properties.Resources.x64_7za);
-
-                    SevenZipNET.SevenZipExtractor.Path7za = path7za;
-                    SevenZipNET.SevenZipExtractor extractor = new SevenZipNET.SevenZipExtractor(downloadPath);
-                    extractor.ExtractAll(Installer.path, true, true);
+                    SevenZip.Extract(downloadPath, Installer.path);
                     File.Delete(downloadPath);
                 }
                 finally

@@ -76,8 +76,6 @@ namespace Cupscale.IO
 			return true;
 		}
 
-		static string path7za = "";
-
 		public static async Task Install ()
 		{
 			Program.mainForm.Enabled = false;
@@ -93,9 +91,6 @@ namespace Cupscale.IO
 			}
 
 			Directory.CreateDirectory(path);
-
-			path7za = Path.Combine(path, "7za.exe");
-			File.WriteAllBytes(path7za, Resources.x64_7za);
 
             try
             {
@@ -126,7 +121,7 @@ namespace Cupscale.IO
 			string url = $"https://dl.nmkd.de/cupscale/shippedfiles/{version}/{filename}";
 			Logger.Log($"[Installer] Downloading {url}");
 			var client = new WebClient();
-			currentDlDialog = new DialogForm($"Downloading {filename}…");
+			currentDlDialog = new DialogForm($"Downloading {filename}ï¿½");
 			sw.Restart();
 			client.DownloadProgressChanged += DownloadProgressChanged;
 			await client.DownloadFileTaskAsync(new Uri(url), savePath);
@@ -150,7 +145,7 @@ namespace Cupscale.IO
 			if(sw.ElapsedMilliseconds > 250)
             {
 				sw.Restart();
-				string newText = currentDlDialog.GetText().Split('…')[0] + "… " + e.ProgressPercentage + "%";
+				string newText = currentDlDialog.GetText().Split('ï¿½')[0] + "ï¿½ " + e.ProgressPercentage + "%";
 				currentDlDialog.ChangeText(newText);
 			}
 		}
@@ -159,9 +154,7 @@ namespace Cupscale.IO
         {
 			Logger.Log("[Installer] Extracting " + path);
 			await Task.Delay(20);
-			SevenZipNET.SevenZipExtractor.Path7za = path7za;
-			SevenZipNET.SevenZipExtractor extractor = new SevenZipNET.SevenZipExtractor(path);
-			extractor.ExtractAll(Paths.GetDataPath(), true, true);
+			SevenZip.Extract(path, Paths.GetDataPath());
 			File.Delete(path);
 			await Task.Delay(10);
 		}
