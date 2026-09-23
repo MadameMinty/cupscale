@@ -72,15 +72,7 @@ namespace Cupscale
         {
             Process ffmpeg = OsUtils.NewProcess(true);
             ffmpeg.StartInfo.Arguments = $"/C cd /D {Paths.binPath.Wrap()} & ffmpeg.exe -hide_banner -y -stats {args}";
-            ffmpeg.Start();
-            ffmpeg.WaitForExit();
-            string output = ffmpeg.StandardOutput.ReadToEnd();
-            string err = ffmpeg.StandardError.ReadToEnd();
-
-            if (!string.IsNullOrWhiteSpace(err))
-                output = output + "\n" + err;
-
-            return output;
+            return OsUtils.RunAndGetOutput(ffmpeg);
         }
     }
 }

@@ -55,6 +55,24 @@ namespace Cupscale.OS
             return SetStartInfo(proc, hidden, filename);
         }
 
+        /// <summary> Starts a hidden (redirected) process and returns stdout + stderr. Drains both pipes concurrently to avoid deadlocks. </summary>
+        public static string RunAndGetOutput(Process proc)
+        {
+            using (proc)
+            {
+                proc.Start();
+                var errTask = proc.StandardError.ReadToEndAsync();
+                string output = proc.StandardOutput.ReadToEnd();
+                string err = errTask.Result;
+                proc.WaitForExit();
+
+                if (!string.IsNullOrWhiteSpace(err))
+                    output += "\n" + err;
+
+                return output;
+            }
+        }
+
         public static void KillProcessTree(Process proc)
         {
             if (proc != null)

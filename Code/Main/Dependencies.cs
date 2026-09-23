@@ -95,11 +95,7 @@ namespace Cupscale.Main
             Process py = OsUtils.NewProcess(true);
             py.StartInfo.Arguments = "/C python -V";
             Logger.Log("[DepCheck] CMD: " + py.StartInfo.Arguments);
-            py.Start();
-            py.WaitForExit();
-            string output = py.StandardOutput.ReadToEnd();
-            string err = py.StandardError.ReadToEnd();
-            return output + "\n" + err;
+            return OsUtils.RunAndGetOutput(py);
         }
 
         public static string GetEmbedPythonOutput()
@@ -107,12 +103,7 @@ namespace Cupscale.Main
             Process py = OsUtils.NewProcess(true);
             py.StartInfo.Arguments = "/C " + EmbeddedPython.GetEmbedPyPath().Wrap() + " -V";
             Logger.Log("[DepCheck] CMD: " + py.StartInfo.Arguments);
-            py.Start();
-            py.WaitForExit();
-            string output = py.StandardOutput.ReadToEnd();
-            string err = py.StandardError.ReadToEnd();
-            if (!string.IsNullOrWhiteSpace(err)) output += "\n" + err;
-            return output;
+            return OsUtils.RunAndGetOutput(py);
         }
 
         public static string GetPytorchVer()
@@ -122,11 +113,7 @@ namespace Cupscale.Main
                 Process py = OsUtils.NewProcess(true);
                 py.StartInfo.Arguments = "\"/C\" " + EmbeddedPython.GetPyCmd() + " -c \"import torch; print(torch.__version__)\"";
                 Logger.Log("[DepCheck] CMD: " + py.StartInfo.Arguments);
-                py.Start();
-                py.WaitForExit();
-                string output = py.StandardOutput.ReadToEnd();
-                string err = py.StandardError.ReadToEnd();
-                if (!string.IsNullOrWhiteSpace(err)) output += "\n" + err;
+                string output = OsUtils.RunAndGetOutput(py);
                 Logger.Log("[DepCheck] Pytorch Check Output: " + output.Trim());
                 return output;
             }
@@ -143,11 +130,7 @@ namespace Cupscale.Main
                 Process py = OsUtils.NewProcess(true);
                 py.StartInfo.Arguments = "\"/C\" " + EmbeddedPython.GetPyCmd() + " -c \"import cv2; print(cv2.__version__)\"";
                 Logger.Log("[DepCheck] CMD: " + py.StartInfo.Arguments);
-                py.Start();
-                py.WaitForExit();
-                string output = py.StandardOutput.ReadToEnd();
-                string err = py.StandardError.ReadToEnd();
-                if (!string.IsNullOrWhiteSpace(err)) output += "\n" + err;
+                string output = OsUtils.RunAndGetOutput(py);
                 Logger.Log("[DepCheck] CV2 Check Output: " + output.Trim());
                 return output;
             }
