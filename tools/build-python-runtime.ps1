@@ -8,14 +8,14 @@ Install it by hosting py.7z and setting "pythonRuntimeUrl" (Turing or newer) or
 "pythonRuntimeUrlLegacy" (older GPUs) in config.json to its URL, or by extracting it into
 CupscaleData\bin (so that bin\py\python.exe exists).
 
-CUDA builds: cu128 covers sm_75 (RTX 20) .. sm_120 (RTX 50). For GTX 900/10 use -Cuda cu126.
+CUDA builds: cu132/cu128 cover sm_75 (RTX 20) .. sm_120 (RTX 50). For GTX 900/10 use -Cuda cu126.
 
 Requires: uv, 7-Zip (7z.exe/7za.exe in PATH, or the bundled Code\Resources\7za.exe).
 #>
 param(
     [string]$OutDir = (Join-Path $PSScriptRoot "..\build\python-runtime"),
-    [string]$PythonVersion = "3.12",
-    [string]$Cuda = "cu128",
+    [string]$PythonVersion = "3.14",
+    [string]$Cuda = "cu132",       # Needs NVIDIA driver 580+; cu128 works from 570
     [string]$TorchVersion = ""      # e.g. "2.8.0"; empty = latest for the CUDA index
 )
 
