@@ -145,7 +145,14 @@ namespace Cupscale.UI
             if (outputFormatBox.Text == Upscale.VidExportMode.GIF.ToStringTitleCase())
                 outputFormat = Upscale.VidExportMode.GIF;
             if (outputFormatBox.Text == Upscale.VidExportMode.SameAsSource.ToStringTitleCase())
-                outputFormat = (Upscale.VidExportMode)Enum.Parse(typeof(Upscale.VidExportMode), Path.GetExtension(currentInPath).Replace(".", "").ToUpper());
+            {
+                string srcExt = Path.GetExtension(currentInPath).Replace(".", "");
+                if (!Enum.TryParse(srcExt, true, out outputFormat) || outputFormat == Upscale.VidExportMode.SameAsSource)
+                {
+                    Print($"Exporting {srcExt.ToUpper()} is not supported, using MP4.");
+                    outputFormat = Upscale.VidExportMode.MP4;
+                }
+            }
 
             if (outputFormat == Upscale.VidExportMode.MP4)
             {
