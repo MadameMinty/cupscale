@@ -136,6 +136,19 @@ namespace Cupscale
             int jpegQ = 0;
 
             Logger.Log($"[ImgProc] Converting {path} to {format}, DelSrc: {deleteSource}, Fill: {fillAlpha}, Ext: {extMode}");
+
+            if (format != Format.DDS)   // Before format settings: these return new images
+            {
+                img = CheckColorDepth(path, img);
+
+                if (fillAlpha)
+                {
+                    MagickImage filled = ImgUtils.FillAlphaWithBgColor(img);
+                    img.Dispose();
+                    img = filled;
+                }
+            }
+
             if (format == Format.PngRaw)
             {
                 img.Format = MagickFormat.Png32;
@@ -193,13 +206,6 @@ namespace Cupscale
             {
                 img.Format = MagickFormat.Gif;
                 newExt = "gif";
-            }
-
-            if (!dds)
-            {
-                img = CheckColorDepth(path, img);
-                if (fillAlpha)
-                    img = ImgUtils.FillAlphaWithBgColor(img);
             }
 
             string outPath = GetOutPath(path, newExt, extMode, overrideOutPath);
