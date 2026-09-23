@@ -376,6 +376,7 @@ __pycache__/
 # tests
 __fixtures__/
 __outputs__/
+Installer Files/esrgan-pytorch/prog
 
 # Fetched by tools/fetch-binaries.ps1 (too large for git)
 /Installer Files/ffmpeg.exe
