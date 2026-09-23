@@ -78,7 +78,7 @@ namespace Cupscale.Main
 			// Video Upscale
 			UiHelpers.InitCombox(videoPreprocessMode, 1);
 
-			await CheckInstallation();
+			CheckInstallation();
 			await EmbeddedPython.Init();
 
 			EsrganData.CheckModelDir();
@@ -105,9 +105,9 @@ namespace Cupscale.Main
 
 			initialized = true;
 			BusyCheckLoop();
-			Task.Run(() => LoadPatronsAsync());
-			Task.Run(() => Servers.Init());
-			Task.Run(() => CheckDependenciesAsync());
+			_ = Task.Run(() => LoadPatronsAsync());
+			_ = Task.Run(() => Servers.Init());
+			_ = Task.Run(() => CheckDependenciesAsync());
 		}
 
 		async Task LoadPatronsAsync()
@@ -173,9 +173,9 @@ namespace Cupscale.Main
 			}
 		}
 
-		public async Task CheckInstallation ()
+		public void CheckInstallation ()
         {
-			await Installer.Init();
+			Installer.Init();
 			Enabled = true;
 		}
 
@@ -260,10 +260,10 @@ namespace Cupscale.Main
 			else e.Effect = DragDropEffects.None;
 		}
 
-		private void previewImg_DragDrop(object sender, DragEventArgs e)
+		private async void previewImg_DragDrop(object sender, DragEventArgs e)
 		{
 			string[] array = e.Data.GetData(DataFormats.FileDrop) as string[];
-			LoadImages(array);
+			await LoadImages(array);
 		}
 
 		private void previewImg_MouseDown(object sender, MouseEventArgs e)
@@ -390,10 +390,10 @@ namespace Cupscale.Main
 			else e.Effect = DragDropEffects.None;
 		}
 
-        private void batchTab_DragDrop(object sender, DragEventArgs e)
+        private async void batchTab_DragDrop(object sender, DragEventArgs e)
         {
 			string[] array = e.Data.GetData(DataFormats.FileDrop) as string[];
-			LoadImages(array);
+			await LoadImages(array);
 		}
 
 		async Task LoadImages (string [] files)
@@ -866,7 +866,7 @@ namespace Cupscale.Main
             }
         }
 
-        private void previewImg_Click(object sender, EventArgs e)
+        private async void previewImg_Click(object sender, EventArgs e)
         {
 			MouseEventArgs mouseEventArgs = (MouseEventArgs)e;
 
@@ -878,7 +878,7 @@ namespace Cupscale.Main
 				fileDialog.Multiselect = true;
 
 				if (fileDialog.ShowDialog() == CommonFileDialogResult.Ok)
-					LoadImages(fileDialog.FileNames.ToArray());
+					await LoadImages(fileDialog.FileNames.ToArray());
 			}
         }
 
