@@ -39,9 +39,9 @@ namespace Cupscale.Forms
                 return;
             }
 
-            if (IoUtils.GetAmountOfFiles(modelDir, true, "*.pth") < 1)
+            if (!Directory.EnumerateFiles(modelDir, "*", SearchOption.AllDirectories).Any(EsrganData.IsModelFile))
             {
-                Program.ShowMessage($"The saved model directory does not contain any model (.pth) files!\n\nPlease put some models into '{modelDir}'.");
+                Program.ShowMessage($"The saved model directory does not contain any model (.pth/.safetensors) files!\n\nPlease put some models into '{modelDir}'.");
                 Close();
                 Process.Start("explorer.exe", Config.Get("modelPath"));
                 return;
@@ -98,7 +98,7 @@ namespace Cupscale.Forms
 
             foreach (FileInfo file in directoryInfo.GetFiles())
             {
-                if (file.Extension == ".pth")    // Hide any other file extension
+                if (EsrganData.IsModelFile(file.Name))    // Hide any other file extension
                     currNode.Nodes.Add(file.FullName, Path.ChangeExtension(file.Name, null));
             }
 
@@ -109,7 +109,7 @@ namespace Cupscale.Forms
                 if (isNcnnModel)
                     currNode.Nodes.Add(subDir.FullName, subDir.Name.Substring(0, subDir.Name.Length - 5));
 
-                bool hasAnyPthFiles = subDir.GetFiles("*.pth", SearchOption.AllDirectories).Length > 0;
+                bool hasAnyPthFiles = subDir.EnumerateFiles("*", SearchOption.AllDirectories).Any(f => EsrganData.IsModelFile(f.Name));
                 bool hasAnyBinFiles = subDir.GetFiles("*.bin", SearchOption.AllDirectories).Length > 0;
                 bool hasAnyParamFiles = subDir.GetFiles("*.param", SearchOption.AllDirectories).Length > 0;
 
@@ -146,7 +146,7 @@ namespace Cupscale.Forms
 
         private void modelTree_AfterSelect(object sender, TreeViewEventArgs e)
         {
-            confirmBtn.Enabled = (Path.GetExtension(modelTree.SelectedNode.Name) == ".pth" || modelTree.SelectedNode.Name.EndsWith(".ncnn"));
+            confirmBtn.Enabled = (EsrganData.IsModelFile(modelTree.SelectedNode.Name) || modelTree.SelectedNode.Name.EndsWith(".ncnn"));
         }
 
         private void ModelSelectForm_KeyPress(object sender, KeyPressEventArgs e)

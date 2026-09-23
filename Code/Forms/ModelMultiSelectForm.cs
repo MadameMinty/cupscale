@@ -54,7 +54,7 @@ namespace Cupscale.Forms
 
         static bool IsModel(TreeNode node)
         {
-            return node.Nodes.Count == 0 && (node.Name.EndsWith(".pth", StringComparison.OrdinalIgnoreCase) || node.Name.EndsWith(".ncnn", StringComparison.OrdinalIgnoreCase));
+            return node.Nodes.Count == 0 && (EsrganData.IsModelFile(node.Name) || node.Name.EndsWith(".ncnn", StringComparison.OrdinalIgnoreCase));
         }
 
         private void modelTree_AfterCheck(object sender, TreeViewEventArgs e)

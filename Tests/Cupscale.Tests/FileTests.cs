@@ -31,6 +31,17 @@ namespace CupscaleTests
             Assert.Equal(Path.Combine(outRoot, expectedRel), result);
         }
 
+        [Theory]
+        [InlineData(@"C:\m\4x_Foo.pth", true)]
+        [InlineData(@"C:\m\4x_Foo.PTH", true)]
+        [InlineData(@"C:\m\1x_Bar.safetensors", true)]
+        [InlineData(@"C:\m\1x_Bar.onnx", false)]
+        [InlineData(@"C:\m\4x_Baz.ncnn", false)]
+        public void IsModelFile_AcceptsPthAndSafetensors(string path, bool expected)
+        {
+            Assert.Equal(expected, EsrganData.IsModelFile(path));
+        }
+
         [Fact]
         public void GetTmpPath_HandlesLegacyDoubleExtension()
         {

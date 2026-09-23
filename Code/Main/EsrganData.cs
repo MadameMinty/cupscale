@@ -1,6 +1,8 @@
 using Cupscale.Forms;
+using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Windows.Forms;
 
 namespace Cupscale
@@ -10,11 +12,19 @@ namespace Cupscale
 		public static List<string> models = new List<string>();
 		public static List<string> modelsFullPath = new List<string>();
 
+		public static readonly string[] modelExtensions = { ".pth", ".safetensors" };
+
+		/// <summary> PyTorch model file (.pth or .safetensors). </summary>
+		public static bool IsModelFile (string path)
+        {
+			return modelExtensions.Any(ext => path.EndsWith(ext, StringComparison.OrdinalIgnoreCase));
+		}
+
 		public static void CheckModelDir()
 		{
 			if (string.IsNullOrWhiteSpace(Config.Get("modelPath")))
 			{
-				Program.ShowMessage("Please set a model path in the settings.\nPoint it to the folder where you save your .pth model files.", "Notice");
+				Program.ShowMessage("Please set a model path in the settings.\nPoint it to the folder where you save your .pth/.safetensors model files.", "Notice");
 				new SettingsForm().ShowDialog();
 			}
 			else if (!Directory.Exists(Config.Get("modelPath")))
@@ -26,7 +36,7 @@ namespace Cupscale
 
 		public static bool ModelExists (string modelName)
         {
-			string[] files = Directory.GetFiles(Config.Get("modelPath"), "*.pth", SearchOption.AllDirectories);
+			IEnumerable<string> files = Directory.GetFiles(Config.Get("modelPath"), "*", SearchOption.AllDirectories).Where(IsModelFile);
 			foreach(string modelFile in files)
             {
 				if (Path.GetFileNameWithoutExtension(modelFile) == modelName)
@@ -49,10 +59,9 @@ namespace Cupscale
 			string[] array = files;
 			foreach (string path in array)
 			{
-				string fileName = Path.GetFileName(path);
-				if (fileName.EndsWith(".pth"))
+				if (IsModelFile(path))
 				{
-					models.Add(fileName.Replace(".pth", ""));
+					models.Add(Path.GetFileNameWithoutExtension(path));
 					modelsFullPath.Add(path);
 				}
 			}
