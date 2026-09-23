@@ -198,15 +198,20 @@ namespace Cupscale.Implementations
                     progressFileOffset = 0;
 
                 fs.Seek(progressFileOffset, SeekOrigin.Begin);
-                string appended = new StreamReader(fs).ReadToEnd();
-                int lastBreak = appended.LastIndexOf('\n');
+                byte[] appended = new byte[fs.Length - progressFileOffset];
+                int read = fs.Read(appended, 0, appended.Length);
+
+                if (read == 0)
+                    return null;
+
+                int lastBreak = Array.LastIndexOf(appended, (byte)'\n', read - 1);
 
                 if (lastBreak < 0)
                     return null;
 
-                progressFileOffset += System.Text.Encoding.UTF8.GetByteCount(appended.Substring(0, lastBreak + 1));
-                string[] lines = appended.Substring(0, lastBreak).Split('\n');
-                return lines[lines.Length - 1].TrimEnd('\r');
+                progressFileOffset += lastBreak + 1;    // Byte offsets: Python may log in the ANSI code page
+                int prevBreak = lastBreak > 0 ? Array.LastIndexOf(appended, (byte)'\n', lastBreak - 1) : -1;
+                return System.Text.Encoding.Default.GetString(appended, prevBreak + 1, lastBreak - prevBreak - 1).TrimEnd('\r');
             }
         }
 
