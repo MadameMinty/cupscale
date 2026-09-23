@@ -2,6 +2,7 @@
 using Cupscale.Main;
 using Cupscale.UI;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -15,24 +16,41 @@ namespace Cupscale.Cupscale
     class PostProcessingQueue
     {
         public static Queue<string> outputFileQueue = new Queue<string>();
-        public static List<string> processedFiles = new List<string>();
+        static readonly HashSet<string> queuedFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        public static HashSet<string> processedFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         public static List<string> outputFiles = new List<string>();
 
         public static bool run;
         public static string currentOutPath;
 
-        //public static bool ncnn;
-
         public enum CopyMode { KeepStructure, CopyToRoot }
         public static CopyMode copyMode;
+
+        static int generation;  // Bumped per run so workers/loops of a cancelled run can't touch the next one
+        static int activeWorkers;
+        static readonly ConcurrentDictionary<string, SemaphoreSlim> stemLocks = new ConcurrentDictionary<string, SemaphoreSlim>(StringComparer.OrdinalIgnoreCase);
+        static readonly object moveLock = new object();
+
+        /// <summary> Settings captured when a run starts. </summary>
+        class RunSettings
+        {
+            public int Generation;
+            public string Format;
+            public string OutPath;
+            public CopyMode CopyMode;
+            public Upscale.Overwrite Overwrite;
+        }
 
         public static void Start (string outpath)
         {
             Logger.Log("[Queue] Start()");
+            Interlocked.Increment(ref generation);
             currentOutPath = outpath;
             outputFileQueue.Clear();
+            queuedFiles.Clear();
             processedFiles.Clear();
-            outputFiles.Clear();
+            lock (outputFiles)
+                outputFiles.Clear();
             IoUtils.ClearDir(Paths.imgOutPath);
             run = true;
         }
@@ -43,19 +61,26 @@ namespace Cupscale.Cupscale
             run = false;
         }
 
+        static bool IsActive (int gen)
+        {
+            return !Program.canceled && gen == generation;
+        }
+
         public static async Task Update ()
         {
-            while (!Program.canceled && (run || AnyFilesLeft()))
+            int gen = generation;
+
+            while (IsActive(gen) && (run || AnyFilesLeft()))
             {
                 CheckNcnnOutput();
                 string[] outFiles = Directory.GetFiles(Paths.imgOutPath, "*.tmp", SearchOption.AllDirectories);
 
                 foreach (string file in outFiles)
                 {
-                    if (!outputFileQueue.Contains(file) && !processedFiles.Contains(file) && !IoUtils.IsFileLocked(file))
+                    if (!queuedFiles.Contains(file) && !processedFiles.Contains(file) && !IoUtils.IsFileLocked(file))
                     {
-                        //processedFiles.Add(file);
                         outputFileQueue.Enqueue(file);
+                        queuedFiles.Add(file);
                         Logger.Log("[Queue] Enqueued " + Path.GetFileName(file));
                     }
                 }
@@ -83,26 +108,33 @@ namespace Cupscale.Cupscale
             }
         }
 
-        static int activeWorkers;
-
         public static async Task ProcessQueue ()
         {
-            string format = PreviewUi.outputFormat.Text;    // Read UI state once, on the UI thread
+            var settings = new RunSettings      // Read UI/static state once, on the UI thread
+            {
+                Generation = generation,
+                Format = PreviewUi.outputFormat.Text,
+                OutPath = currentOutPath,
+                CopyMode = copyMode,
+                Overwrite = Upscale.overwriteMode,
+            };
+
             int maxWorkers = Math.Max(1, Math.Min(4, Environment.ProcessorCount / 2));
             List<Task> workers = new List<Task>();
 
-            while (!Program.canceled && (run || AnyFilesLeft()))
+            while (IsActive(settings.Generation) && (run || AnyFilesLeft()))
             {
                 workers.RemoveAll(t => t.IsCompleted);
 
                 while (outputFileQueue.Count > 0 && workers.Count < maxWorkers)
                 {
                     string file = outputFileQueue.Dequeue();
+                    queuedFiles.Remove(file);
                     processedFiles.Add(file);
                     Interlocked.Increment(ref activeWorkers);
                     workers.Add(Task.Run(async () =>
                     {
-                        try { await ProcessFile(file, format); }
+                        try { await ProcessFile(file, settings); }
                         finally { Interlocked.Decrement(ref activeWorkers); }
                     }));
                 }
@@ -113,14 +145,19 @@ namespace Cupscale.Cupscale
             await Task.WhenAll(workers);
         }
 
-        static async Task ProcessFile (string file, string format)
+        static async Task ProcessFile (string file, RunSettings settings)
         {
+            // "dir\a.jpg.tmp" and "dir\a.png.tmp" both produce "dir\a.*" intermediates: process them one at a time
+            string stemKey = Path.Combine(Path.GetDirectoryName(file), Path.GetFileNameWithoutExtension(Path.GetFileNameWithoutExtension(file)));
+            SemaphoreSlim stemLock = stemLocks.GetOrAdd(stemKey, _ => new SemaphoreSlim(1, 1));
+            await stemLock.WaitAsync();
+
             Logger.Log("[Queue] Post-Processing " + Path.GetFileName(file));
             Stopwatch sw = Stopwatch.StartNew();
 
             try
             {
-                string processed = await PostProcessing.PostprocessingSingle(file, false, 20, true, format);
+                string processed = await PostProcessing.PostprocessingSingle(file, false, 20, true, settings.Format);
 
                 for (int retries = 20; retries > 0 && IoUtils.IsFileLocked(processed); retries--)
                 {
@@ -138,11 +175,17 @@ namespace Cupscale.Cupscale
                     return;
                 }
 
+                if (!IsActive(settings.Generation))     // Cancelled or superseded by a newer run
+                {
+                    IoUtils.TryDeleteIfExists(outFilename);
+                    return;
+                }
+
                 lock (outputFiles)
                     outputFiles.Add(outFilename);
 
                 Logger.Log("[Queue] Done Post-Processing " + Path.GetFileName(file) + " in " + sw.ElapsedMilliseconds + "ms");
-                MoveToOutput(outFilename);
+                MoveToOutput(outFilename, settings);
             }
             catch (Exception e)
             {
@@ -151,30 +194,33 @@ namespace Cupscale.Cupscale
             }
             finally
             {
-                Interlocked.Increment(ref BatchUpscaleUI.upscaledImages);
+                stemLock.Release();
+
+                if (settings.Generation == generation)
+                    Interlocked.Increment(ref BatchUpscaleUI.upscaledImages);
             }
         }
 
-        static void MoveToOutput (string outFilename)
+        static void MoveToOutput (string outFilename, RunSettings settings)
         {
             try
             {
                 string targetPath;
 
-                if (copyMode == CopyMode.KeepStructure)
-                    targetPath = currentOutPath + outFilename.Replace(Paths.imgOutPath, "");
+                if (settings.CopyMode == CopyMode.KeepStructure)
+                    targetPath = settings.OutPath + outFilename.Replace(Paths.imgOutPath, "");
                 else
-                    targetPath = Path.Combine(currentOutPath, Path.GetFileName(outFilename));
+                    targetPath = Path.Combine(settings.OutPath, Path.GetFileName(outFilename));
 
-                if (Upscale.overwriteMode == Upscale.Overwrite.Yes)
+                if (settings.Overwrite == Upscale.Overwrite.Yes)
+                    targetPath = Path.Combine(Path.GetDirectoryName(targetPath), Path.GetFileNameWithoutExtension(targetPath).Replace("-" + Upscale.GetLastModelName(), "") + Path.GetExtension(targetPath));
+
+                lock (moveLock)     // CopyToRoot can map several files to one target
                 {
-                    string suffixToRemove = "-" + Upscale.GetLastModelName();
-                    targetPath = Path.Combine(Path.GetDirectoryName(targetPath), Path.GetFileNameWithoutExtension(targetPath).Replace(suffixToRemove, "") + Path.GetExtension(targetPath));
+                    Directory.CreateDirectory(Path.GetDirectoryName(targetPath));
+                    IoUtils.DeleteIfExists(targetPath);
+                    File.Move(outFilename, targetPath);
                 }
-
-                Directory.CreateDirectory(Path.GetDirectoryName(targetPath));
-                IoUtils.DeleteIfExists(targetPath);
-                File.Move(outFilename, targetPath);
             }
             catch (Exception e)
             {
@@ -186,14 +232,14 @@ namespace Cupscale.Cupscale
         {
             foreach (string file in Directory.GetFiles(Paths.imgOutPath, "*.*.png", SearchOption.AllDirectories))   // Rename to tmp
             {
-                if (IoUtils.IsFileLocked(file))
-                    continue;
-
                 try
                 {
                     string movePath = GetTmpPath(file, Paths.imgOutPath, Paths.imgInPath, File.Exists);
 
-                    if (movePath == null)   // Not an AI output (e.g. a file being post-processed)
+                    if (movePath == null)   // Not an AI output (e.g. a file being post-processed) - don't touch it
+                        continue;
+
+                    if (IoUtils.IsFileLocked(file))     // Still being written
                         continue;
 
                     Logger.Log("[Queue] Renaming " + file + " => " + movePath);
