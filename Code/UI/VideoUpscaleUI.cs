@@ -81,16 +81,18 @@ namespace Cupscale.UI
             BatchUpscaleUI.LoadDir(Paths.imgInPath, true);
             Print("Upscaling frames...");
             await BatchUpscaleUI.Run(false, true, false, Paths.framesOutPath);
-            RenameOutFiles();
+            await Task.Run(() => RenameOutFiles());
             Print($"Done upscaling all frames.");
             BatchUpscaleUI.Reset();
             Print("Creating video from frames...");
             await CreateVideo();
             Print("Done creating video.");
-            CopyBack(Path.Combine(Paths.GetDataPath(), "frames-out.mp4"));
-            Print("Adding audio from source to output video...");
-            IoUtils.ClearDir(Paths.imgInPath);
-            IoUtils.ClearDir(Paths.framesOutPath);
+            await CopyBack(Path.Combine(Paths.GetDataPath(), "frames-out.mp4"));
+            await Task.Run(() =>
+            {
+                IoUtils.ClearDir(Paths.imgInPath);
+                IoUtils.ClearDir(Paths.framesOutPath);
+            });
             Program.mainForm.SetBusy(false);
             Print("Finished.");
         }
@@ -160,7 +162,10 @@ namespace Cupscale.UI
                 await Task.Delay(10);
                 await FFmpegCommands.FramesToMp4(Paths.framesOutPath, Config.GetBool("h265"), Config.GetInt("crf"), fps, "", false);
                 if (Config.GetBool("vidEnableAudio"))
+                {
+                    Print("Adding audio from source to output video...");
                     await FFmpegCommands.MergeAudio(Paths.framesOutPath + ".mp4", currentInPath);
+                }
                 f.Close();
             }
 
@@ -174,7 +179,7 @@ namespace Cupscale.UI
             }
         }
 
-        static void CopyBack(string path)
+        static async Task CopyBack(string path)
         {
             if (!File.Exists(path))
             {
@@ -202,9 +207,12 @@ namespace Cupscale.UI
             Print("Moving output video to " + outPath + "...");
             try
             {
-                if (File.Exists(outPath))
-                    File.Delete(outPath);
-                File.Move(path, outPath);
+                await Task.Run(() =>    // Cross-drive moves copy the whole file
+                {
+                    if (File.Exists(outPath))
+                        File.Delete(outPath);
+                    File.Move(path, outPath);
+                });
             }
             catch (Exception e)
             {
@@ -222,7 +230,7 @@ namespace Cupscale.UI
                     string filename = Path.GetFileName(frame);
                     string newFilename = Path.GetFileNameWithoutExtension(frame).Split('-')[0];
                     string newPath = Path.Combine(frame.GetParentDir(), newFilename + Path.GetExtension(frame)).Replace(".png.png", ".png");
-                    Logger.Log("NewPath: " + newPath);
+                    if (Logger.doLogIo) Logger.Log("NewPath: " + newPath);
                     File.Move(frame, newPath);
                 }
             }
