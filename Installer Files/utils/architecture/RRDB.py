@@ -11,6 +11,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from . import block as B
+from .block import unwrap_params
 
 
 # Borrowed from https://github.com/rlaphoenix/VSGAN/blob/master/vsgan/archs/ESRGAN.py
@@ -61,9 +62,7 @@ class RRDBNet(nn.Module):
                 r"body\.(\d+)\.rdb(\d)\.conv(\d+)\.(weight|bias)",
             ),
         }
-        if "params_ema" in self.state:
-            self.state = self.state["params_ema"]
-            # self.model_arch = "RealESRGAN"
+        self.state = unwrap_params(self.state)
         self.num_blocks = self.get_num_blocks()
         self.plus = any("conv1x1" in k for k in self.state.keys())
         if self.plus:
@@ -179,8 +178,7 @@ class RRDBNet(nn.Module):
 
     def new_to_old_arch(self, state):
         """Convert a new-arch model state dictionary to an old-arch dictionary."""
-        if "params_ema" in state:
-            state = state["params_ema"]
+        state = unwrap_params(state)
 
         if "conv_first.weight" not in state:
             # model is already old arch, this is a loose check, but should be sufficient

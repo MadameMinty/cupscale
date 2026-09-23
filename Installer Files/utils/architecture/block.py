@@ -11,6 +11,14 @@ import torch.nn as nn
 ####################
 
 
+def unwrap_params(state):
+    """BasicSR checkpoints nest weights under "params_ema" (preferred) or "params"."""
+    for key in ("params_ema", "params"):
+        if key in state and isinstance(state[key], dict):
+            return state[key]
+    return state
+
+
 def act(act_type, inplace=True, neg_slope=0.2, n_prelu=1):
     # helper selecting activation
     # neg_slope: for leakyrelu and init of prelu

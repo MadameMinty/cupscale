@@ -287,16 +287,16 @@ class Upscale:
         if self.fp16:
             tensor = tensor.half()
 
-        with inference_mode():
+        with inference_mode():  # In-place ops on its outputs are only allowed inside it
             output = self.model(tensor.unsqueeze(0)).squeeze(0).float().clamp_(0, 1)
 
-        if output.shape[0] == 3:
-            output = output[[2, 1, 0], :, :]
-        elif output.shape[0] == 4:
-            output = output[[2, 1, 0, 3], :, :]
-        if to_uint8:
-            output = output.mul_(255.0).round_().to(torch.uint8)
-        return output.permute(1, 2, 0).cpu().numpy()
+            if output.shape[0] == 3:
+                output = output[[2, 1, 0], :, :]
+            elif output.shape[0] == 4:
+                output = output[[2, 1, 0, 3], :, :]
+            if to_uint8:
+                output = output.mul_(255.0).round_().to(torch.uint8)
+            return output.permute(1, 2, 0).cpu().numpy()
 
     def load_model(self, model_path: str):
         if model_path == self.last_model:
@@ -330,12 +330,12 @@ class Upscale:
             state_dict = ops.load_state_dict(model_path)
 
         # SRVGGNet Real-ESRGAN (v2)
-        if (
-            "params" in state_dict.keys()
-            and "body.0.weight" in state_dict["params"].keys()
+        if any(
+            key in state_dict and "body.0.weight" in state_dict[key]
+            for key in ("params_ema", "params")
         ):
             model = RealESRGANv2(state_dict)
-            info = (model.num_in_ch, model.num_out_ch, model.num_feat, model.num_conv, model.scale)
+            info = (model.in_nc, model.out_nc, model.num_feat, model.num_conv, model.scale)
         # SPSR (ESRGAN with lots of extra layers)
         elif "f_HR_conv1.0.weight" in state_dict:
             model = SPSR(state_dict)

@@ -6,6 +6,8 @@ import math
 import torch.nn as nn
 import torch.nn.functional as F
 
+from .block import unwrap_params
+
 
 class SRVGGNetCompact(nn.Module):
     """A compact VGG-style network structure for super-resolution.
@@ -33,8 +35,7 @@ class SRVGGNetCompact(nn.Module):
 
         self.state = state_dict
 
-        if "params" in self.state:
-            self.state = self.state["params"]
+        self.state = unwrap_params(self.state)
 
         self.key_arr = list(self.state.keys())
 
