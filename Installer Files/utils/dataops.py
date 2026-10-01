@@ -85,25 +85,28 @@ def auto_split_upscale(
     current_depth: int = 1,
     current_tile_num: int = 1
 ):
+    """Upscales lr_img whole, or recursively in quadrants (with `overlap` LR pixels of context) when the GPU runs out of memory.
+    max_depth: depth to start at without attempting larger tiles (from a previous image, or a VRAM estimate).
+    Returns (image, depth used, next tile number)."""
+    h, w, c = lr_img.shape
 
     # Attempt to upscale if unknown depth or if reached known max depth
-    if max_depth is None or max_depth == current_depth:
+    if max_depth is None or current_depth >= max_depth:
         try:
             result = upscale_function(lr_img)
-            print(f'Tile {current_tile_num}/{4 ** (max_depth-1) if max_depth is not None else 4 ** (current_depth-1)}')
-            logging.info("Tile %d/%d" % (current_tile_num, (4 ** (max_depth-1) if max_depth is not None else 4 ** (current_depth-1))))
-            return result, current_depth, current_tile_num+1
+            total = 4 ** (max(max_depth or 0, current_depth) - 1)
+            print(f"Tile {current_tile_num}/{total}")
+            logging.info("Tile %d/%d", current_tile_num, total)
+            return result, current_depth, current_tile_num + 1
         except RuntimeError as e:
-            # Check to see if its actually the CUDA out of memory error
-            if "CUDA" in str(e):
-                # Collect garbage (clear VRAM)
-                torch.cuda.empty_cache()
-                gc.collect()
             # Re-raise the exception if not an OOM error
-            else:
-                raise RuntimeError(e)
-
-    h, w, c = lr_img.shape
+            if "CUDA" not in str(e):
+                raise
+            if h // 2 <= overlap or w // 2 <= overlap:  # Quadrants would not shrink
+                raise RuntimeError(f"Out of memory even on a {h}x{w} tile") from e
+            # Collect garbage (clear VRAM)
+            torch.cuda.empty_cache()
+            gc.collect()
 
     # Split image into 4ths
     top_left = lr_img[: h // 2 + overlap, : w // 2 + overlap, :]

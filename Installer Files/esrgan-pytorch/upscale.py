@@ -150,6 +150,45 @@ class Upscale:
         self.alpha_mode = alpha_mode
         self.log = log
         self.model_cache = {}
+        self.bytes_per_px = {}  # model path -> measured peak VRAM per input pixel
+        if not self.cpu:
+            self.__cap_allocator()
+
+    VRAM_HEADROOM = 0.9  # Share of free VRAM an image may use; the rest covers fragmentation and the desktop
+
+    def __cap_allocator(self) -> None:
+        """Make torch raise OOM at the VRAM limit. Otherwise the Windows driver silently spills into system RAM,
+        the model crawls over PCIe and the OOM-driven tiling never triggers."""
+        free, total = torch.cuda.mem_get_info(self.device)
+        torch.cuda.set_per_process_memory_fraction(min(1.0, free * self.VRAM_HEADROOM / total), self.device)
+
+    def __measure_bytes_per_px(self, in_nc: int, size: int = 512) -> Optional[float]:
+        if self.cpu:
+            return None
+        torch.cuda.synchronize(self.device)
+        torch.cuda.empty_cache()
+        torch.cuda.reset_peak_memory_stats(self.device)
+        base = torch.cuda.memory_allocated(self.device)
+        try:
+            self.process(np.zeros((size, size, in_nc), np.uint8))
+        except RuntimeError as e:  # Probe itself does not fit; leave it to the OOM-driven splitting
+            if "CUDA" not in str(e):
+                raise
+            torch.cuda.empty_cache()
+            return None
+        return (torch.cuda.max_memory_allocated(self.device) - base) / (size * size)
+
+    def initial_split_depth(self, height: int, width: int, overlap: int = 32) -> Optional[int]:
+        """Depth at which a tile of the image fits the free VRAM, from the model's measured per-pixel cost."""
+        bytes_per_px = self.bytes_per_px.get(self.last_model)
+        if not bytes_per_px:
+            return None
+        free, _ = torch.cuda.mem_get_info(self.device)
+        budget = free * self.VRAM_HEADROOM / bytes_per_px
+        depth = 1
+        while (height / 2 ** (depth - 1) + 2 * overlap) * (width / 2 ** (depth - 1) + 2 * overlap) > budget and depth < 8:
+            depth += 1
+        return depth
 
     def run(self) -> None:
         model_chain = (
@@ -254,17 +293,11 @@ class Upscale:
                 self.load_model(model_path)
 
                 if self.cache_max_split_depth and i in split_depths:
-                    rlt, depth, _ = ops.auto_split_upscale(
-                        img,
-                        self.upscale,
-                        self.last_scale,
-                        max_depth=split_depths[i],
-                    )
+                    max_depth = split_depths[i]
                 else:
-                    rlt, depth, _ = ops.auto_split_upscale(
-                        img, self.upscale, self.last_scale
-                    )
-                    split_depths[i] = depth
+                    max_depth = self.initial_split_depth(img_height, img_width)
+                rlt, depth, _ = ops.auto_split_upscale(img, self.upscale, self.last_scale, max_depth=max_depth)
+                split_depths[i] = depth
 
                 final_scale *= self.last_scale
 
@@ -359,6 +392,8 @@ class Upscale:
             self.last_scale,
         ) = self.model_cache[model_path]
         self.last_model = model_path
+        if model_path not in self.bytes_per_px:
+            self.bytes_per_px[model_path] = self.__measure_bytes_per_px(self.last_in_nc)
 
     def __build_model(self, model_path: str):
         # interpolating OTF, example: 4xBox@25&4xPSNR@75
