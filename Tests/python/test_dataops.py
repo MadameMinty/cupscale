@@ -1,3 +1,4 @@
+import cv2
 import numpy as np
 import pytest
 import torch
@@ -87,3 +88,47 @@ def test_auto_split_reraises_non_oom_errors():
 
     with pytest.raises(RuntimeError, match="shape mismatch"):
         ops.auto_split_upscale(np.zeros((8, 8, 3), np.uint8), broken, scale=2)
+
+
+def blur_then_x2(img):
+    """5x5 box blur twice: receptive radius 4, so tiles with overlap >= 4 must stitch to the exact direct result."""
+    out = cv2.blur(cv2.blur(img, (5, 5)), (5, 5))
+    return nearest_x2(out)
+
+
+def blur_x1(img):
+    return cv2.blur(cv2.blur(img, (5, 5)), (5, 5))
+
+
+@pytest.mark.parametrize("shape", [(64, 48), (101, 77), (33, 130)])
+@pytest.mark.parametrize("depth", [2, 3])
+@pytest.mark.parametrize("fn, scale", [(blur_then_x2, 2), (blur_x1, 1)])
+def test_forced_split_stitches_exactly(shape, depth, fn, scale):
+    img = np.random.default_rng(3).integers(0, 255, shape + (3,), dtype=np.uint8)
+
+    rlt, used, tiles = ops.auto_split_upscale(img, fn, scale=scale, overlap=8, max_depth=depth)
+
+    assert (used, tiles) == (depth, 4 ** (depth - 1) + 1)
+    np.testing.assert_array_equal(rlt, fn(img))
+
+
+def test_forced_depth_still_splits_further_on_oom():
+    img = np.random.default_rng(4).integers(0, 255, (128, 96, 3), dtype=np.uint8)
+
+    def limited(tile):
+        if tile.shape[0] * tile.shape[1] > 48 * 48:
+            raise RuntimeError("CUDA out of memory")
+        return blur_then_x2(tile)
+
+    rlt, depth, _ = ops.auto_split_upscale(img, limited, scale=2, overlap=8, max_depth=2)
+
+    assert depth == 3
+    np.testing.assert_array_equal(rlt, blur_then_x2(img))
+
+
+def test_auto_split_gives_up_on_tiny_tiles():
+    def always_oom(_):
+        raise RuntimeError("CUDA out of memory")
+
+    with pytest.raises(RuntimeError, match="Out of memory even on"):
+        ops.auto_split_upscale(np.zeros((64, 64, 3), np.uint8), always_oom, scale=2, overlap=8)

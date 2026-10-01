@@ -1,8 +1,11 @@
+import types
+
 import numpy as np
 import pytest
 import torch
 
 import utils.dataops as ops
+import upscale
 from upscale import AlphaOptions, Upscale
 
 
@@ -190,3 +193,44 @@ def test_chain_with_cached_split_depth_runs(tmp_path, monkeypatch):
         result = ops.imread_unicode(up.output / name)
         assert result.shape == (24, 20, 3)
         assert (result == 90).all()
+
+
+def test_initial_split_depth_fits_tiles_to_free_vram(tmp_path, monkeypatch):
+    up = make_upscaler(tmp_path)
+    up.last_model, up.bytes_per_px = "m", {"m": 1000.0}
+    monkeypatch.setattr(torch.cuda, "mem_get_info", lambda device=None: (10_000_000, 16_000_000))
+
+    assert up.initial_split_depth(200, 200) == 4  # Budget 9000 px: (25+64)^2 is the first tile that fits
+    assert up.initial_split_depth(10, 10) == 1
+    up.bytes_per_px["m"] = None
+    assert up.initial_split_depth(200, 200) is None
+
+
+def test_cuda_allocator_is_capped_to_free_vram(tmp_path, monkeypatch):
+    calls = []
+    monkeypatch.setattr(torch.cuda, "mem_get_info", lambda device=None: (8_000_000_000, 16_000_000_000))
+    monkeypatch.setattr(torch.cuda, "set_per_process_memory_fraction", lambda fraction, device=None: calls.append(fraction))
+
+    Upscale(model="m", input=tmp_path, output=tmp_path, cpu=False)
+
+    assert calls == [pytest.approx(0.45)]
+
+
+def test_run_starts_at_estimated_split_depth(tmp_path, monkeypatch):
+    monkeypatch.setattr(Upscale, "_Upscale__build_model", lambda self, path: (NearestX2(), 3, 3, 0, 0, 2))
+    monkeypatch.setattr(Upscale, "_Upscale__check_model_path", lambda self, path: path)
+    seen = []
+
+    def spy(img, fn, scale, max_depth=None, **kwargs):
+        seen.append(max_depth)
+        return ops.auto_split_upscale(img, fn, scale, max_depth=max_depth, overlap=4)
+
+    monkeypatch.setattr(upscale, "ops", types.SimpleNamespace(**{**vars(ops), "auto_split_upscale": spy}))
+    up = make_upscaler(tmp_path)
+    up.initial_split_depth = lambda h, w: 2
+    ops.imwrite_unicode(up.input / "a.png", np.full((16, 12, 3), 90, np.uint8))
+
+    up.run()
+
+    assert seen == [2]
+    assert (ops.imread_unicode(up.output / "a.png") == 90).all()
