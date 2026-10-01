@@ -1,14 +1,11 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 import argparse
 import logging
 import sys
-from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor
 from enum import Enum
 from pathlib import Path
-from typing import List, Optional, Union
 
 import cv2
 import numpy as np
@@ -110,7 +107,7 @@ class Upscale:
     last_nb: int = None
     last_scale: int = None
     last_kind: str = None
-    model: Union[torch.nn.Module, ESRGAN, RealESRGANv2, SPSR] = None
+    model: torch.nn.Module | ESRGAN | RealESRGANv2 | SPSR = None
 
     def __init__(
         self,
@@ -120,7 +117,7 @@ class Upscale:
         reverse: bool = False,
         skip_existing: bool = False,
         delete_input: bool = False,
-        seamless: Optional[SeamlessOptions] = None,
+        seamless: SeamlessOptions | None = None,
         cpu: bool = False,
         fp16: bool = False,
         device_id: int = 0,
@@ -129,7 +126,7 @@ class Upscale:
         ternary_alpha: bool = False,
         alpha_threshold: float = 0.5,
         alpha_boundary_offset: float = 0.2,
-        alpha_mode: Optional[AlphaOptions] = None,
+        alpha_mode: AlphaOptions | None = None,
         log: logging.Logger = logging.getLogger(),
     ) -> None:
         self.model_str = model
@@ -162,7 +159,7 @@ class Upscale:
         free, total = torch.cuda.mem_get_info(self.device)
         torch.cuda.set_per_process_memory_fraction(min(1.0, free * self.VRAM_HEADROOM / total), self.device)
 
-    def __measure_bytes_per_px(self, in_nc: int, size: int = 512) -> Optional[float]:
+    def __measure_bytes_per_px(self, in_nc: int, size: int = 512) -> float | None:
         if self.cpu:
             return None
         torch.cuda.synchronize(self.device)
@@ -178,7 +175,7 @@ class Upscale:
             return None
         return (torch.cuda.max_memory_allocated(self.device) - base) / (size * size)
 
-    def initial_split_depth(self, height: int, width: int, overlap: int = 32) -> Optional[int]:
+    def initial_split_depth(self, height: int, width: int, overlap: int = 32) -> int | None:
         """Depth at which a tile of the image fits the free VRAM, from the model's measured per-pixel cost."""
         bytes_per_px = self.bytes_per_px.get(self.last_model)
         if not bytes_per_px:
@@ -237,7 +234,7 @@ class Upscale:
         )
 
 
-        images: List[Path] = []
+        images: list[Path] = []
         for ext in ["png", "jpg", "jpeg", "gif", "bmp", "tiff", "tga"]:
             images.extend(self.input.glob(f"**/*.{ext}"))
 
